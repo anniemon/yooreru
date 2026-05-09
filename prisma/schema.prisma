@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  AUTHOR
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
+enum CommentStatus {
+  PUBLISHED
+  HIDDEN
+  SPAM
+  PENDING
+}
+
+enum SubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+}
+
+enum EmailDeliveryStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         UserRole @default(AUTHOR)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+  lastLoginAt  DateTime? @db.Timestamptz(3)
+
+  posts   Post[]
+  invites Invite[] @relation("InviteCreator")
+}
+
+model Invite {
+  id          Int       @id @default(autoincrement())
+  email       String
+  token       String    @unique
+  role        UserRole  @default(AUTHOR)
+  expiresAt   DateTime  @db.Timestamptz(3)
+  acceptedAt  DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  invitedById Int
+  invitedBy   User      @relation("InviteCreator", fields: [invitedById], references: [id], onDelete: Restrict, onUpdate: Restrict)
+}
+
+model Post {
+  id               Int        @id @default(autoincrement())
+  wordpressId      Int?       @unique
+  title            String
+  slug             String
+  excerpt          String     @default("")
+  contentHtml      String
+  contentText      String     @default("")
+  featuredImageUrl String?
+  permalink        String?    @unique
+  status           PostStatus @default(DRAFT)
+  allowComments    Boolean    @default(true)
+  publishedAt      DateTime?  @db.Timestamptz(3)
+  createdAt        DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime   @updatedAt @db.Timestamptz(3)
+  authorId         Int?
+  categoryId       Int?
+  author           User?      @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Restrict)
+  category         Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Restrict)
+
+  postTags   PostTag[]
+  comments   Comment[]
+  deliveries EmailDelivery[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+}
+
+model Category {
+  id          Int        @id @default(autoincrement())
+  wordpressId Int?      @unique
+  name        String
+  slug        String     @unique
+  description String     @default("")
+  parentId    Int?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Restrict)
+  children    Category[] @relation("CategoryTree")
+  posts       Post[]
+
+  @@index([parentId])
+}
+
+model Tag {
+  id          Int    @id @default(autoincrement())
+  wordpressId Int?  @unique
+  name        String
+  slug        String @unique
+  description String @default("")
+  postTags    PostTag[]
+}
+
+model PostTag {
+  postId Int
+  tagId  Int
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+}
+
+model Comment {
+  id          Int           @id @default(autoincrement())
+  wordpressId Int?         @unique
+  postId      Int
+  parentId    Int?
+  authorName  String
+  authorEmail String?
+  content     String
+  status      CommentStatus @default(PUBLISHED)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  parent   Comment?  @relation("CommentThread", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Restrict)
+  children Comment[] @relation("CommentThread")
+
+  @@index([postId, createdAt])
+}
+
+model Subscriber {
+  id        Int              @id @default(autoincrement())
+  email     String           @unique
+  status    SubscriberStatus @default(ACTIVE)
+  createdAt DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime         @updatedAt @db.Timestamptz(3)
+
+  deliveries EmailDelivery[]
+}
+
+model EmailDelivery {
+  id           Int                 @id @default(autoincrement())
+  subscriberId Int
+  postId       Int?
+  subject      String
+  status       EmailDeliveryStatus @default(QUEUED)
+  providerId   String?
+  error        String?
+  createdAt    DateTime            @default(now()) @db.Timestamptz(3)
+  sentAt       DateTime?           @db.Timestamptz(3)
+
+  subscriber Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  post       Post?      @relation(fields: [postId], references: [id], onDelete: SetNull, onUpdate: Restrict)
+}
+
+model MediaAsset {
+  id          Int      @id @default(autoincrement())
+  wordpressId Int?    @unique
+  url         String
+  pathname    String?
+  filename    String
+  alt         String   @default("")
+  mimeType    String?
+  size        Int?
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+}
+
+model ContactMessage {
+  id          Int      @id @default(autoincrement())
+  senderName  String
+  senderEmail String
+  message     String
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+}
