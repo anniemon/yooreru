@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "./prisma";
 import type { PostGetPayload } from "@/generated/prisma/models";
 import type { BlogCategory, BlogComment, BlogPost, BlogTag } from "./blog-types";
+import { cleanCommentContent } from "./slug";
 import { formatDatePathParts, getZonedMonthKey } from "./time-zone";
 
 const postInclude = {
@@ -73,7 +74,7 @@ function mapComment(comment: {
           .update(comment.authorEmail.trim().toLowerCase())
           .digest("hex")
       : undefined,
-    content: comment.content,
+    content: cleanCommentContent(comment.content),
     createdAt: comment.createdAt,
   };
 }

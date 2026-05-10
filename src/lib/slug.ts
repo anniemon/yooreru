@@ -32,3 +32,7 @@ export function decodeHtml(input: string) {
 export function stripHtml(input: string) {
   return decodeHtml(input.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
 }
+
+export function cleanCommentContent(input: string) {
+  return stripHtml(input.replace(/<!--\s*\/?wp:[\s\S]*?-->/g, " "));
+}

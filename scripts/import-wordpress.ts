@@ -9,7 +9,7 @@ import { put } from "@vercel/blob";
 import { XMLParser } from "fast-xml-parser";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { makeExcerpt, normalizeSlug, stripHtml } from "../src/lib/slug";
+import { cleanCommentContent, makeExcerpt, normalizeSlug, stripHtml } from "../src/lib/slug";
 import bcrypt from "bcryptjs";
 import sharp from "sharp";
 
@@ -631,10 +631,12 @@ async function main() {
         ? await prisma.comment.findUnique({ where: { wordpressId: parentWpId } })
         : null;
 
+      const commentContent = cleanCommentContent(text(comment.comment_content));
+
       await prisma.comment.upsert({
         where: { wordpressId: wordpressId ?? -1 },
         update: {
-          content: text(comment.comment_content),
+          content: commentContent,
           status: text(comment.comment_approved) === "1" ? "PUBLISHED" : "PENDING",
         },
         create: {
@@ -643,7 +645,7 @@ async function main() {
           parentId: parent?.id ?? null,
           authorName: text(comment.comment_author) || "anonymous",
           authorEmail: text(comment.comment_author_email) || null,
-          content: text(comment.comment_content),
+          content: commentContent,
           status: text(comment.comment_approved) === "1" ? "PUBLISHED" : "PENDING",
           createdAt: comment.comment_date_gmt ? new Date(`${text(comment.comment_date_gmt)}Z`) : new Date(),
         },
