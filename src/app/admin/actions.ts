@@ -3,11 +3,12 @@
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { put } from "@vercel/blob";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { authenticate, createSession, destroySession, requireAdmin } from "@/lib/auth";
 import { SITE } from "@/lib/constants";
+import { CONTENT_CACHE_TAG } from "@/lib/content";
 import { sendMail } from "@/lib/mail";
 import { requirePrisma } from "@/lib/prisma";
 import { makeExcerpt, normalizeSlug, stripHtml } from "@/lib/slug";
@@ -244,6 +245,7 @@ export async function savePost(formData: FormData) {
   }
 
   revalidatePath("/");
+  revalidateTag(CONTENT_CACHE_TAG, "max");
   redirect("/admin");
 }
 
@@ -302,6 +304,7 @@ export async function saveCategory(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/categories");
+  revalidateTag(CONTENT_CACHE_TAG, "max");
   redirect("/admin/categories");
 }
 
@@ -313,6 +316,7 @@ export async function deleteCategory(formData: FormData) {
   await db.category.delete({ where: { id } });
   revalidatePath("/");
   revalidatePath("/admin/categories");
+  revalidateTag(CONTENT_CACHE_TAG, "max");
   redirect("/admin/categories");
 }
 

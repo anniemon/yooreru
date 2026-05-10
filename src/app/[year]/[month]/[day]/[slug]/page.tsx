@@ -9,7 +9,7 @@ export default async function PostPage({
 }) {
   const { year, month, day, slug } = await params;
   const post = await getPostByDateSlug(year, month, day, slug);
-  const adjacent = await getAdjacentPosts(post.id);
+  const adjacent = await getAdjacentPosts(post);
 
   return (
     <>

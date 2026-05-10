@@ -42,3 +42,5 @@ export type BlogPost = {
   tags: BlogTag[];
   comments?: BlogComment[];
 };
+
+export type BlogPostLink = Pick<BlogPost, "id" | "title" | "slug" | "publishedAt">;

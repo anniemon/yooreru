@@ -1,11 +1,14 @@
 import { createHash } from "node:crypto";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { prisma } from "./prisma";
 import type { PostGetPayload } from "@/generated/prisma/models";
-import type { BlogCategory, BlogComment, BlogPost, BlogTag } from "./blog-types";
+import type { BlogCategory, BlogComment, BlogPost, BlogPostLink, BlogTag } from "./blog-types";
 import { cleanCommentContent } from "./slug";
 import { formatDatePathParts, getZonedMonthKey } from "./time-zone";
+
+export const CONTENT_CACHE_TAG = "content";
 
 const postInclude = {
   author: { select: { id: true, name: true } },
@@ -171,14 +174,89 @@ async function getDbPublishedPosts() {
   });
 }
 
+const getCachedDbPublishedPosts = unstable_cache(getDbPublishedPosts, ["published-posts"], {
+  tags: [CONTENT_CACHE_TAG],
+  revalidate: 300,
+});
+
 export const getPublishedPosts = cache(async () => {
-  const posts = await getDbPublishedPosts();
+  const posts = await getCachedDbPublishedPosts();
   return posts.map(mapPost);
 });
 
+async function getDbPublishedPostLinks() {
+  if (!prisma) {
+    return [];
+  }
+
+  return prisma.post.findMany({
+    where: {
+      status: "PUBLISHED",
+      publishedAt: { lte: new Date() },
+    },
+    orderBy: [{ publishedAt: "desc" }],
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      publishedAt: true,
+    },
+  });
+}
+
+const getCachedDbPublishedPostLinks = unstable_cache(getDbPublishedPostLinks, ["published-post-links"], {
+  tags: [CONTENT_CACHE_TAG],
+  revalidate: 300,
+});
+
+export const getPublishedPostLinks = cache(async (): Promise<BlogPostLink[]> => getCachedDbPublishedPostLinks());
+
+function uniqueValues(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function safeDecodeURIComponent(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function slugCandidates(slug: string) {
+  const decoded = safeDecodeURIComponent(slug);
+  const doubleDecoded = safeDecodeURIComponent(decoded);
+
+  return uniqueValues([slug, decoded, doubleDecoded]);
+}
+
+const getCachedDbPostsBySlugs = unstable_cache(
+  async (slugs: string[]) => {
+    if (!prisma || !slugs.length) {
+      return [];
+    }
+
+    return prisma.post.findMany({
+      where: {
+        status: "PUBLISHED",
+        publishedAt: { lte: new Date() },
+        slug: { in: slugs },
+      },
+      orderBy: [{ publishedAt: "desc" }],
+      include: postInclude,
+    });
+  },
+  ["published-post-by-slugs"],
+  {
+    tags: [CONTENT_CACHE_TAG],
+    revalidate: 300,
+  },
+);
+
 export const getPostByDateSlug = cache(
   async (year: string, month: string, day: string, slug: string) => {
-    const posts = await getPublishedPosts();
+    const slugs = slugCandidates(slug);
+    const posts = (await getCachedDbPostsBySlugs(slugs)).map(mapPost);
     const post = posts.find((item) => {
       if (!item.publishedAt) {
         return false;
@@ -186,7 +264,7 @@ export const getPostByDateSlug = cache(
       const dateParts = formatDatePathParts(item.publishedAt);
 
       return (
-        item.slug === decodeURIComponent(slug) &&
+        slugs.includes(item.slug) &&
         dateParts.year === year &&
         dateParts.month === month &&
         dateParts.day === day
@@ -344,21 +422,72 @@ export async function searchPosts(query: string) {
   });
 }
 
-export async function getAdjacentPosts(postId: number) {
-  const posts = await getPublishedPosts();
-  const index = posts.findIndex((post) => post.id === postId);
+const getCachedAdjacentPostLinks = unstable_cache(
+  async (postId: number, publishedAtIso: string) => {
+    if (!prisma) {
+      return {
+        previous: null,
+        next: null,
+      };
+    }
 
-  if (index === -1) {
+    const publishedAt = new Date(publishedAtIso);
+    if (Number.isNaN(publishedAt.getTime())) {
+      return {
+        previous: null,
+        next: null,
+      };
+    }
+
+    const [previous, next] = await Promise.all([
+      prisma.post.findFirst({
+        where: {
+          id: { not: postId },
+          status: "PUBLISHED",
+          publishedAt: { lt: publishedAt },
+        },
+        orderBy: [{ publishedAt: "desc" }],
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          publishedAt: true,
+        },
+      }),
+      prisma.post.findFirst({
+        where: {
+          id: { not: postId },
+          status: "PUBLISHED",
+          publishedAt: { gt: publishedAt, lte: new Date() },
+        },
+        orderBy: [{ publishedAt: "asc" }],
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          publishedAt: true,
+        },
+      }),
+    ]);
+
+    return { previous, next };
+  },
+  ["adjacent-post-links"],
+  {
+    tags: [CONTENT_CACHE_TAG],
+    revalidate: 300,
+  },
+);
+
+export async function getAdjacentPosts(post: Pick<BlogPost, "id" | "publishedAt">) {
+  if (!post.publishedAt) {
     return {
       previous: null,
       next: null,
     };
   }
 
-  return {
-    previous: posts[index + 1] ?? null,
-    next: posts[index - 1] ?? null,
-  };
+  return getCachedAdjacentPostLinks(post.id, post.publishedAt.toISOString());
 }
 
 export function postHref(post: Pick<BlogPost, "slug" | "publishedAt">) {

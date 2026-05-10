@@ -1,10 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { SITE } from "@/lib/constants";
-import { postHref } from "@/lib/content";
+import { CONTENT_CACHE_TAG, postHref } from "@/lib/content";
 import { createPostComment } from "@/services/comments";
 import { saveContactMessage } from "@/services/contact";
 import { subscribeEmail } from "@/services/subscribers";
@@ -70,6 +70,7 @@ export async function createComment(postId: number, parentId: number | null, for
     publishedAt: post.publishedAt,
   });
   revalidatePath(href);
+  revalidateTag(CONTENT_CACHE_TAG, "max");
   redirect(`${href}#comments`);
 }
 
@@ -83,6 +84,7 @@ export async function subscribe(_state: SubscribeState, formData: FormData): Pro
 
   // Next.js 캐시 무효화
   revalidatePath("/");
+  revalidateTag(CONTENT_CACHE_TAG, "max");
   return {
     ok: true,
     message: result.alreadySubscribed ? "이미 구독 중입니다." : "구독이 등록되었습니다.",

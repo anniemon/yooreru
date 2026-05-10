@@ -2,8 +2,8 @@ import Link from "next/link";
 import { HomeCalendarClient } from "@/components/home-calendar";
 import { SubscribeForm } from "@/components/subscribe-form";
 import { SITE } from "@/lib/constants";
-import { getCategories, getPublishedPosts, postHref } from "@/lib/content";
-import type { BlogCategory, BlogPost } from "@/lib/blog-types";
+import { getCategories, getPublishedPostLinks, postHref } from "@/lib/content";
+import type { BlogCategory, BlogPost, BlogPostLink } from "@/lib/blog-types";
 import { formatWpDate as formatAppWpDate, getAppTimeZone, getZonedCalendarParts } from "@/lib/time-zone";
 
 type CategoryTreeNode = BlogCategory & {
@@ -135,7 +135,7 @@ export async function HomeCategoryNavigation() {
 }
 
 export async function HomeCalendar() {
-  const posts = await getPublishedPosts();
+  const posts = await getPublishedPostLinks();
   const today = getZonedCalendarParts(new Date());
   const entries = posts.flatMap((post) => {
     if (!post.publishedAt) {
@@ -330,8 +330,8 @@ export function PostNavigation({
   previous,
   next,
 }: {
-  previous: BlogPost | null;
-  next: BlogPost | null;
+  previous: BlogPostLink | null;
+  next: BlogPostLink | null;
 }) {
   return (
     <div className="wp-block-columns is-not-stacked-on-mobile is-layout-flex post-navigation-grid">
