@@ -90,6 +90,7 @@ export function HomeCalendarClient({
   const initialMonthValue = monthKey(initialYear, initialMonthIndex);
   const [visibleMonthValue, setVisibleMonthValue] = useState(initialMonthValue);
   const calendar = useMemo(() => buildCalendarMonth(entries, visibleMonthValue), [entries, visibleMonthValue]);
+  const canNavigateNext = visibleMonthValue < initialMonthValue;
 
   return (
     <div className="aligncenter wp-block-calendar">
@@ -152,18 +153,20 @@ export function HomeCalendarClient({
           </button>
         </span>
         <span className="pad">&nbsp;</span>
-        <span className="wp-calendar-nav-next">
-          <button
-            type="button"
-            className="calendar-nav-button calendar-nav-button-next"
-            onClick={() => setVisibleMonthValue((value) => value + 1)}
-          >
-            <span>{calendar.nextLabel} </span>
-            <span className="calendar-nav-arrow" aria-hidden="true">
-              &raquo;
-            </span>
-          </button>
-        </span>
+        {canNavigateNext ? (
+          <span className="wp-calendar-nav-next">
+            <button
+              type="button"
+              className="calendar-nav-button calendar-nav-button-next"
+              onClick={() => setVisibleMonthValue((value) => value + 1)}
+            >
+              <span>{calendar.nextLabel} </span>
+              <span className="calendar-nav-arrow" aria-hidden="true">
+                &raquo;
+              </span>
+            </button>
+          </span>
+        ) : null}
       </nav>
     </div>
   );
