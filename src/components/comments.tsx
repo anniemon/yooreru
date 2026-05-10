@@ -3,14 +3,22 @@ import { createComment } from "@/app/actions";
 import { getAppTimeZone } from "@/lib/time-zone";
 
 function formatCommentTimestamp(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: getAppTimeZone(),
     year: "numeric",
-    month: "long",
-    day: "numeric",
+    month: "2-digit",
+    day: "2-digit",
     hour: "numeric",
     minute: "2-digit",
-  }).format(date);
+    hour12: true,
+  })
+    .formatToParts(date)
+    .reduce<Record<string, string>>((acc, part) => {
+      acc[part.type] = part.value;
+      return acc;
+    }, {});
+
+  return `${parts.year}.${parts.month}.${parts.day} ${parts.hour}:${parts.minute} ${parts.dayPeriod}`;
 }
 
 function avatarUrl(comment: BlogComment) {
@@ -96,7 +104,7 @@ function CommentNode({ comment, postId }: { comment: BlogComment; postId: number
             )}
             <b className="fn">{comment.authorName}</b>
           </div>
-          <div className="comment-metadata">
+          <div className="comment-metadata wp-block-comment-date has-small-font-size">
             <time dateTime={comment.createdAt.toISOString()}>{formatCommentTimestamp(comment.createdAt)}</time>
           </div>
         </footer>
