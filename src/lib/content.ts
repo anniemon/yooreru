@@ -7,6 +7,7 @@ import type { BlogCategory, BlogComment, BlogPost, BlogTag } from "./blog-types"
 import { formatDatePathParts, getZonedMonthKey } from "./time-zone";
 
 const postInclude = {
+  author: { select: { id: true, name: true } },
   category: { include: { parent: true, _count: { select: { posts: true } } } },
   postTags: {
     include: {
@@ -134,8 +135,13 @@ function optimizeContentImages(html: string) {
 }
 
 function mapPost(post: DbPost): BlogPost {
+  if (!post.author) {
+    throw new Error(`Post ${post.id} is missing an author.`);
+  }
+
   return {
     id: post.id,
+    author: post.author,
     title: post.title,
     slug: post.slug,
     excerpt: post.excerpt,

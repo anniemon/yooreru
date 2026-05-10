@@ -1,7 +1,6 @@
 import { Comments } from "@/components/comments";
 import { PostNavigation, PostTagLinks, SiteHeader, formatWpDate } from "@/components/site";
 import { getAdjacentPosts, getPostByDateSlug } from "@/lib/content";
-import { SITE } from "@/lib/constants";
 
 export default async function PostPage({
   params,
@@ -25,7 +24,7 @@ export default async function PostPage({
             <time dateTime={post.publishedAt?.toISOString()}>{formatWpDate(post.publishedAt)}</time>
           </div>
           <div className="has-link-color wp-block-post-author-name has-text-color has-custom-color-2-color has-cabin-font-family">
-            <span className="wp-block-post-author-name__link">{SITE.authorName}</span>
+            <span className="wp-block-post-author-name__link">{post.author.name}</span>
           </div>
         </div>
       </div>

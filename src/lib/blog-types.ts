@@ -27,6 +27,10 @@ export type BlogComment = {
 
 export type BlogPost = {
   id: number;
+  author: {
+    id: number;
+    name: string;
+  };
   title: string;
   slug: string;
   excerpt: string;
