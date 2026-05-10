@@ -1,4 +1,4 @@
-import { BlogComment, BlogPost } from "@/lib/sample-data";
+import type { BlogComment, BlogPost } from "@/lib/blog-types";
 import { createComment } from "@/app/actions";
 import { getAppTimeZone } from "@/lib/time-zone";
 

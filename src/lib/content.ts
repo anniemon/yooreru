@@ -3,15 +3,7 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "./prisma";
 import type { PostGetPayload } from "@/generated/prisma/models";
-import {
-  BlogCategory,
-  BlogComment,
-  BlogPost,
-  BlogTag,
-  sampleCategories,
-  samplePosts,
-  sampleTags,
-} from "./sample-data";
+import type { BlogCategory, BlogComment, BlogPost, BlogTag } from "./blog-types";
 import { formatDatePathParts, getZonedMonthKey } from "./time-zone";
 
 const postInclude = {
@@ -174,10 +166,6 @@ async function getDbPublishedPosts() {
 
 export const getPublishedPosts = cache(async () => {
   const posts = await getDbPublishedPosts();
-  if (!posts.length) {
-    return samplePosts;
-  }
-
   return posts.map(mapPost);
 });
 
@@ -208,7 +196,7 @@ export const getPostByDateSlug = cache(
 
 export const getCategories = cache(async () => {
   if (!prisma) {
-    return sampleCategories;
+    return [];
   }
 
   const categories = await prisma.category.findMany({
@@ -216,12 +204,12 @@ export const getCategories = cache(async () => {
     include: { parent: true, _count: { select: { posts: true } } },
   });
 
-  return categories.length ? categories.map(mapCategory) : sampleCategories;
+  return categories.map(mapCategory);
 });
 
 export const getTags = cache(async () => {
   if (!prisma) {
-    return sampleTags;
+    return [];
   }
 
   const tags = await prisma.tag.findMany({
@@ -229,7 +217,7 @@ export const getTags = cache(async () => {
     include: { _count: { select: { postTags: true } } },
   });
 
-  return tags.length ? tags.map(mapTag) : sampleTags;
+  return tags.map(mapTag);
 });
 
 export async function getPostsByCategory(slugs: string[]) {
@@ -245,13 +233,10 @@ export async function getCategoryArchivePage(slugs: string[], page: number, page
   const skip = (currentPage - 1) * pageSize;
 
   if (!prisma) {
-    const posts = (await getPublishedPosts()).filter((post) => post.categories[0]?.slug === lastSlug);
-    const paginatedPosts = posts.slice(skip, skip + pageSize + 1);
-
     return {
-      posts: paginatedPosts.slice(0, pageSize),
+      posts: [],
       page: currentPage,
-      hasNext: paginatedPosts.length > pageSize,
+      hasNext: false,
     };
   }
 

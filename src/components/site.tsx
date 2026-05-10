@@ -3,7 +3,7 @@ import { HomeCalendarClient } from "@/components/home-calendar";
 import { SITE } from "@/lib/constants";
 import { subscribe } from "@/app/actions";
 import { getCategories, getPublishedPosts, postHref } from "@/lib/content";
-import type { BlogCategory, BlogPost } from "@/lib/sample-data";
+import type { BlogCategory, BlogPost } from "@/lib/blog-types";
 import { formatWpDate as formatAppWpDate, getAppTimeZone, getZonedCalendarParts } from "@/lib/time-zone";
 
 type CategoryTreeNode = BlogCategory & {
