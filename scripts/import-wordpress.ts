@@ -10,6 +10,7 @@ import { XMLParser } from "fast-xml-parser";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { makeExcerpt, normalizeSlug, stripHtml } from "../src/lib/slug";
+import sharp from "sharp";
 
 type AnyRecord = Record<string, any>;
 
@@ -29,6 +30,9 @@ type UploadedMedia = {
   mimeType?: string;
   size: number;
 };
+
+const BLOG_IMAGE_MAX_DIMENSION = 1600;
+const BLOG_IMAGE_WEBP_QUALITY = 82;
 
 function asArray<T>(value: T | T[] | undefined | null): T[] {
   if (value == null) {
@@ -77,7 +81,7 @@ function hashValue(input: string) {
 }
 
 function extensionForContentType(contentType: string) {
-  const type = contentType.split(";")[0]?.trim().toLowerCase();
+  const type = normalizedContentType(contentType);
   switch (type) {
     case "image/jpeg":
       return ".jpg";
@@ -96,6 +100,10 @@ function extensionForContentType(contentType: string) {
   }
 }
 
+function normalizedContentType(contentType: string) {
+  return contentType.split(";")[0]?.trim().toLowerCase() || "application/octet-stream";
+}
+
 function filenameFromUrl(sourceUrl: string, contentType?: string) {
   let filename = "image";
   try {
@@ -111,6 +119,57 @@ function filenameFromUrl(sourceUrl: string, contentType?: string) {
   }
 
   return `${safeName}${extensionForContentType(contentType)}`;
+}
+
+function filenameWithExtension(filename: string, extension: string) {
+  const currentExtension = extname(filename);
+  if (!currentExtension) {
+    return `${filename}${extension}`;
+  }
+
+  return `${filename.slice(0, -currentExtension.length)}${extension}`;
+}
+
+function isOptimizableImage(contentType: string) {
+  return ["image/jpeg", "image/png", "image/webp", "image/avif"].includes(normalizedContentType(contentType));
+}
+
+async function optimizeImageForBlog(input: Buffer, mimeType: string, filename: string) {
+  if (!isOptimizableImage(mimeType)) {
+    return {
+      buffer: input,
+      mimeType: normalizedContentType(mimeType),
+      filename,
+    };
+  }
+
+  const optimized = await sharp(input, { failOn: "none" })
+    .rotate()
+    .resize({
+      width: BLOG_IMAGE_MAX_DIMENSION,
+      height: BLOG_IMAGE_MAX_DIMENSION,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .webp({
+      quality: BLOG_IMAGE_WEBP_QUALITY,
+      effort: 4,
+    })
+    .toBuffer();
+
+  if (optimized.byteLength >= input.byteLength) {
+    return {
+      buffer: input,
+      mimeType: normalizedContentType(mimeType),
+      filename,
+    };
+  }
+
+  return {
+    buffer: optimized,
+    mimeType: "image/webp",
+    filename: filenameWithExtension(filename, ".webp"),
+  };
 }
 
 function isMigratableImageUrl(value: string) {
@@ -174,17 +233,19 @@ async function uploadMediaFromUrl(sourceUrl: string, attachment?: Attachment): P
     throw new Error(`Failed to download ${sourceUrl}: ${response.status} ${response.statusText}`);
   }
 
-  const mimeType = response.headers.get("content-type") ?? attachment?.mimeType ?? "application/octet-stream";
-  if (!mimeType.startsWith("image/")) {
-    throw new Error(`Downloaded file is not an image: ${sourceUrl} (${mimeType})`);
+  const downloadedMimeType = response.headers.get("content-type") ?? attachment?.mimeType ?? "application/octet-stream";
+  const normalizedMimeType = normalizedContentType(downloadedMimeType);
+  if (!normalizedMimeType.startsWith("image/")) {
+    throw new Error(`Downloaded file is not an image: ${sourceUrl} (${downloadedMimeType})`);
   }
 
   const buffer = Buffer.from(await response.arrayBuffer());
-  const filename = attachment?.filename || filenameFromUrl(sourceUrl, mimeType);
-  const pathname = `wordpress/${attachment?.wordpressId ?? hashValue(sourceUrl)}/${safeFilename(filename)}`;
-  const blob = await put(pathname, buffer, {
+  const originalFilename = attachment?.filename || filenameFromUrl(sourceUrl, normalizedMimeType);
+  const optimized = await optimizeImageForBlog(buffer, normalizedMimeType, originalFilename);
+  const pathname = `wordpress/${attachment?.wordpressId ?? hashValue(sourceUrl)}/${safeFilename(optimized.filename)}`;
+  const blob = await put(pathname, optimized.buffer, {
     access: "public",
-    contentType: mimeType,
+    contentType: optimized.mimeType,
     addRandomSuffix: false,
     allowOverwrite: true,
     cacheControlMaxAge: 31536000,
@@ -193,9 +254,9 @@ async function uploadMediaFromUrl(sourceUrl: string, attachment?: Attachment): P
   return {
     url: blob.url,
     pathname: blob.pathname,
-    filename,
-    mimeType,
-    size: buffer.byteLength,
+    filename: optimized.filename,
+    mimeType: optimized.mimeType,
+    size: optimized.buffer.byteLength,
   };
 }
 
