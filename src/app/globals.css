@@ -1484,7 +1484,7 @@ button {
 .admin-rich-editor blockquote,
 .admin-rich-editor ul,
 .admin-rich-editor ol {
-  margin: 0 0 1rem;
+  margin: 0;
 }
 
 .admin-rich-editor blockquote {
