@@ -249,33 +249,26 @@ function slugCandidates(slug: string) {
   return uniqueValues([slug, decoded, doubleDecoded]);
 }
 
-const getCachedDbPostsBySlugs = unstable_cache(
-  async (slugs: string[]) => {
-    if (!prisma || !slugs.length) {
-      return [];
-    }
+async function getDbPostsBySlugs(slugs: string[]) {
+  if (!prisma || !slugs.length) {
+    return [];
+  }
 
-    return prisma.post.findMany({
-      where: {
-        status: "PUBLISHED",
-        publishedAt: { lte: new Date() },
-        slug: { in: slugs },
-      },
-      orderBy: [{ publishedAt: "desc" }],
-      include: postInclude,
-    });
-  },
-  ["published-post-by-slugs"],
-  {
-    tags: [CONTENT_CACHE_TAG],
-    revalidate: 300,
-  },
-);
+  return prisma.post.findMany({
+    where: {
+      status: "PUBLISHED",
+      publishedAt: { lte: new Date() },
+      slug: { in: slugs },
+    },
+    orderBy: [{ publishedAt: "desc" }],
+    include: postInclude,
+  });
+}
 
 export const getPostByDateSlug = cache(
   async (year: string, month: string, day: string, slug: string) => {
     const slugs = slugCandidates(slug);
-    const posts = (await getCachedDbPostsBySlugs(slugs)).map(mapPost);
+    const posts = (await getDbPostsBySlugs(slugs)).map(mapPost);
     const post = posts.find((item) => {
       if (!item.publishedAt) {
         return false;
@@ -441,62 +434,55 @@ export async function searchPosts(query: string) {
   });
 }
 
-const getCachedAdjacentPostLinks = unstable_cache(
-  async (postId: number, publishedAtIso: string) => {
-    if (!prisma) {
-      return {
-        previous: null,
-        next: null,
-      };
-    }
+async function getAdjacentPostLinks(postId: number, publishedAtIso: string) {
+  if (!prisma) {
+    return {
+      previous: null,
+      next: null,
+    };
+  }
 
-    const publishedAt = new Date(publishedAtIso);
-    if (Number.isNaN(publishedAt.getTime())) {
-      return {
-        previous: null,
-        next: null,
-      };
-    }
+  const publishedAt = new Date(publishedAtIso);
+  if (Number.isNaN(publishedAt.getTime())) {
+    return {
+      previous: null,
+      next: null,
+    };
+  }
 
-    const [previous, next] = await Promise.all([
-      prisma.post.findFirst({
-        where: {
-          id: { not: postId },
-          status: "PUBLISHED",
-          publishedAt: { lt: publishedAt },
-        },
-        orderBy: [{ publishedAt: "desc" }],
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          publishedAt: true,
-        },
-      }),
-      prisma.post.findFirst({
-        where: {
-          id: { not: postId },
-          status: "PUBLISHED",
-          publishedAt: { gt: publishedAt, lte: new Date() },
-        },
-        orderBy: [{ publishedAt: "asc" }],
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          publishedAt: true,
-        },
-      }),
-    ]);
+  const [previous, next] = await Promise.all([
+    prisma.post.findFirst({
+      where: {
+        id: { not: postId },
+        status: "PUBLISHED",
+        publishedAt: { lt: publishedAt },
+      },
+      orderBy: [{ publishedAt: "desc" }],
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        publishedAt: true,
+      },
+    }),
+    prisma.post.findFirst({
+      where: {
+        id: { not: postId },
+        status: "PUBLISHED",
+        publishedAt: { gt: publishedAt, lte: new Date() },
+      },
+      orderBy: [{ publishedAt: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        publishedAt: true,
+      },
+    }),
+  ]);
 
-    return { previous, next };
-  },
-  ["adjacent-post-links"],
-  {
-    tags: [CONTENT_CACHE_TAG],
-    revalidate: 300,
-  },
-);
+  return { previous, next };
+}
 
 export async function getAdjacentPosts(post: Pick<BlogPost, "id" | "publishedAt">) {
   if (!post.publishedAt) {
@@ -506,7 +492,7 @@ export async function getAdjacentPosts(post: Pick<BlogPost, "id" | "publishedAt"
     };
   }
 
-  const adjacent = await getCachedAdjacentPostLinks(post.id, post.publishedAt.toISOString());
+  const adjacent = await getAdjacentPostLinks(post.id, post.publishedAt.toISOString());
 
   return {
     previous: adjacent.previous ? mapPostLink(adjacent.previous) : null,
