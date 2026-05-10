@@ -31,6 +31,14 @@ type UploadedMedia = {
   size: number;
 };
 
+type WpTerm = {
+  wordpressId?: number;
+  name: string;
+  slug: string;
+  description: string;
+  parentSlug?: string;
+};
+
 const BLOG_IMAGE_MAX_DIMENSION = 1600;
 const BLOG_IMAGE_WEBP_QUALITY = 82;
 
@@ -299,6 +307,43 @@ function categoriesFor(item: AnyRecord, domain: "category" | "post_tag") {
     .filter((category) => category.name);
 }
 
+function termsForChannel(channel: AnyRecord, key: "category" | "tag"): WpTerm[] {
+  return asArray<AnyRecord>(channel[key])
+    .filter((term) => term.term_id || term.category_nicename || term.tag_slug)
+    .map((term) => {
+      const rawSlug = key === "category" ? text(term.category_nicename) : text(term.tag_slug);
+      const rawParentSlug = key === "category" ? text(term.category_parent) : "";
+      return {
+        wordpressId: parseWpId(term.term_id),
+        name: text(term.cat_name || term.tag_name),
+        slug: rawSlug ? decodeURIComponent(rawSlug) : normalizeSlug(text(term.cat_name || term.tag_name)),
+        description: text(term.category_description || term.tag_description),
+        parentSlug: rawParentSlug ? decodeURIComponent(rawParentSlug) : undefined,
+      };
+    })
+    .filter((term) => term.name && term.slug);
+}
+
+function categoryDepth(slug: string, categoryBySlug: Map<string, WpTerm>) {
+  let depth = 0;
+  let current = categoryBySlug.get(slug);
+  const visited = new Set<string>();
+
+  while (current?.parentSlug && !visited.has(current.parentSlug)) {
+    visited.add(current.parentSlug);
+    depth += 1;
+    current = categoryBySlug.get(current.parentSlug);
+  }
+
+  return depth;
+}
+
+function primaryCategoryForPost(categories: Array<Pick<WpTerm, "slug">>, categoryTermsBySlug: Map<string, WpTerm>) {
+  return categories.toSorted(
+    (left, right) => categoryDepth(right.slug, categoryTermsBySlug) - categoryDepth(left.slug, categoryTermsBySlug),
+  )[0];
+}
+
 async function main() {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is required.");
@@ -328,6 +373,9 @@ async function main() {
   const attachmentsById = new Map<number, Attachment>();
   const attachmentsByUrl = new Map<string, Attachment>();
   const uploadedByOriginalUrl = new Map<string, UploadedMedia>();
+  const categoryTerms = termsForChannel(channel, "category");
+  const tagTerms = termsForChannel(channel, "tag");
+  const categoryTermsBySlug = new Map(categoryTerms.map((category) => [category.slug, category]));
 
   for (const item of items) {
     if (text(item.post_type) !== "attachment") {
@@ -362,12 +410,66 @@ async function main() {
   let importedComments = 0;
   let importedMedia = 0;
 
+  for (const category of categoryTerms) {
+    const saved = await prisma.category.upsert({
+      where: { slug: category.slug },
+      update: {
+        wordpressId: category.wordpressId,
+        name: category.name,
+        description: category.description,
+      },
+      create: {
+        wordpressId: category.wordpressId,
+        name: category.name,
+        slug: category.slug,
+        description: category.description,
+      },
+    });
+    categoryBySlug.set(category.slug, saved.id);
+  }
+
+  for (const category of categoryTerms) {
+    const categoryId = categoryBySlug.get(category.slug);
+    if (!categoryId) {
+      continue;
+    }
+
+    await prisma.category.update({
+      where: { id: categoryId },
+      data: {
+        parentId: category.parentSlug ? categoryBySlug.get(category.parentSlug) ?? null : null,
+      },
+    });
+  }
+
+  for (const tag of tagTerms) {
+    const saved = await prisma.tag.upsert({
+      where: { slug: tag.slug },
+      update: {
+        wordpressId: tag.wordpressId,
+        name: tag.name,
+        description: tag.description,
+      },
+      create: {
+        wordpressId: tag.wordpressId,
+        name: tag.name,
+        slug: tag.slug,
+        description: tag.description,
+      },
+    });
+    tagBySlug.set(tag.slug, saved.id);
+  }
+
   for (const item of items) {
     if (text(item.post_type) !== "post" && text(item.post_type) !== "page") {
       continue;
     }
 
     for (const category of categoriesFor(item, "category")) {
+      if (categoryBySlug.has(category.slug)) {
+        continue;
+      }
+
       const saved = await prisma.category.upsert({
         where: { slug: category.slug },
         update: { name: category.name },
@@ -377,6 +479,10 @@ async function main() {
     }
 
     for (const tag of categoriesFor(item, "post_tag")) {
+      if (tagBySlug.has(tag.slug)) {
+        continue;
+      }
+
       const saved = await prisma.tag.upsert({
         where: { slug: tag.slug },
         update: { name: tag.name },
@@ -420,10 +526,8 @@ async function main() {
     const slug = text(item.post_name) || normalizeSlug(title);
     const status = text(item.status) === "publish" ? "PUBLISHED" : "DRAFT";
     const publishedAt = item.pubDate ? new Date(text(item.pubDate)) : null;
-    const categoryId =
-      categoriesFor(item, "category")
-        .map((category) => categoryBySlug.get(category.slug))
-        .find((id): id is number => Boolean(id)) ?? null;
+    const primaryCategory = primaryCategoryForPost(categoriesFor(item, "category"), categoryTermsBySlug);
+    const categoryId = primaryCategory ? categoryBySlug.get(primaryCategory.slug) ?? null : null;
     const tagConnections = categoriesFor(item, "post_tag")
       .map((tag) => tagBySlug.get(tag.slug))
       .filter(Boolean)
