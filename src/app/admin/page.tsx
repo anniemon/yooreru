@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createInvite } from "@/app/admin/actions";
 import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
+import { postHref } from "@/lib/content";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminPage() {
@@ -44,7 +45,9 @@ export default async function AdminPage() {
           <tbody>
             {posts.map((post) => (
               <tr key={post.id}>
-                <td>{post.title}</td>
+                <td>
+                  <Link href={postHref(post)}>{post.title}</Link>
+                </td>
                 <td>{post.status}</td>
                 <td>{post._count.comments}</td>
                 <td>
