@@ -50,6 +50,10 @@ export function AdminPostForm({
   const isComposingRef = useRef(false);
   const initializedContentRef = useRef(false);
   const initialContentHtml = useMemo(() => post?.contentHtml ?? "<p><br></p>", [post?.contentHtml]);
+  const defaultPublishedAt = useMemo(
+    () => formatDateTimeLocal(post?.publishedAt ?? (!post?.id ? new Date() : null), timeZone),
+    [post?.id, post?.publishedAt, timeZone],
+  );
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const defaultCategoryId = useMemo(
@@ -279,7 +283,7 @@ export function AdminPostForm({
         </label>
         <label>
           발행일
-          <input type="datetime-local" name="publishedAt" defaultValue={formatDateTimeLocal(post?.publishedAt, timeZone)} />
+          <input type="datetime-local" name="publishedAt" defaultValue={defaultPublishedAt} />
         </label>
       </div>
 
@@ -306,7 +310,7 @@ export function AdminPostForm({
           댓글 허용
         </label>
         <label>
-          <input type="checkbox" name="notifySubscribers" />
+          <input type="checkbox" name="notifySubscribers" defaultChecked={!post?.id} />
           발행 시 구독자에게 이메일 발송
         </label>
       </div>
