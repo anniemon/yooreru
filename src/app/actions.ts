@@ -35,7 +35,14 @@ export type SubscribeState = {
 
 const contactSchema = z.object({
   senderName: z.string().trim().min(1).max(80),
-  senderEmail: z.string().trim().email().max(160),
+  senderEmail: z.preprocess((value) => {
+    if (typeof value !== "string") {
+      return undefined;
+    }
+
+    const email = value.trim();
+    return email || undefined;
+  }, z.string().email().max(160).optional()),
   message: z.string().trim().min(1).max(4000),
   company: z.string().optional(),
 });
@@ -94,5 +101,5 @@ export async function sendContactMessage(formData: FormData) {
 
   await saveContactMessage(parsed.data);
 
-  redirect(`${SITE.contactPath}?sent=1`);
+  redirect(`${encodeURI(SITE.contactPath)}?sent=1`);
 }

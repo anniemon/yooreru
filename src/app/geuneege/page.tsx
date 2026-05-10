@@ -74,7 +74,6 @@ export default async function ContactPage({
                       type="email"
                       placeholder="원하신다면 메일 주소를 남겨주세요"
                       maxLength={160}
-                      required
                     />
                   </div>
                   <div className="wp-block-jetpack-field-textarea grunion-field-textarea-wrap wp-block-jetpack-input-wrap has-border-color-wrap grunion-field-wrap">

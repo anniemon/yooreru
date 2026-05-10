@@ -182,7 +182,7 @@ model MediaAsset {
 model ContactMessage {
   id          Int      @id @default(autoincrement())
   senderName  String
-  senderEmail String
+  senderEmail String?
   message     String
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
 }
