@@ -26,6 +26,15 @@ const postInclude = {
 
 type DbPost = PostGetPayload<{ include: typeof postInclude }>;
 
+function coerceDate(value: Date | string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function mapCategory(category: {
   id: number;
   name: string;
@@ -65,7 +74,7 @@ function mapComment(comment: {
   authorName: string;
   authorEmail: string | null;
   content: string;
-  createdAt: Date;
+  createdAt: Date | string;
 }): BlogComment {
   return {
     id: comment.id,
@@ -78,7 +87,7 @@ function mapComment(comment: {
           .digest("hex")
       : undefined,
     content: cleanCommentContent(comment.content),
-    createdAt: comment.createdAt,
+    createdAt: coerceDate(comment.createdAt) ?? new Date(0),
   };
 }
 
@@ -151,11 +160,18 @@ function mapPost(post: DbPost): BlogPost {
     excerpt: post.excerpt,
     contentHtml: optimizeContentImages(post.contentHtml),
     featuredImageUrl: post.featuredImageUrl,
-    publishedAt: post.publishedAt,
+    publishedAt: coerceDate(post.publishedAt),
     allowComments: post.allowComments,
     categories: post.category ? [mapCategory(post.category)] : [],
     tags: post.postTags.map((postTag) => mapTag(postTag.tag)),
     comments: nestComments(post.comments.map(mapComment)),
+  };
+}
+
+function mapPostLink(post: BlogPostLink): BlogPostLink {
+  return {
+    ...post,
+    publishedAt: coerceDate(post.publishedAt),
   };
 }
 
@@ -209,7 +225,10 @@ const getCachedDbPublishedPostLinks = unstable_cache(getDbPublishedPostLinks, ["
   revalidate: 300,
 });
 
-export const getPublishedPostLinks = cache(async (): Promise<BlogPostLink[]> => getCachedDbPublishedPostLinks());
+export const getPublishedPostLinks = cache(async (): Promise<BlogPostLink[]> => {
+  const posts = await getCachedDbPublishedPostLinks();
+  return posts.map(mapPostLink);
+});
 
 function uniqueValues(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
@@ -487,7 +506,12 @@ export async function getAdjacentPosts(post: Pick<BlogPost, "id" | "publishedAt"
     };
   }
 
-  return getCachedAdjacentPostLinks(post.id, post.publishedAt.toISOString());
+  const adjacent = await getCachedAdjacentPostLinks(post.id, post.publishedAt.toISOString());
+
+  return {
+    previous: adjacent.previous ? mapPostLink(adjacent.previous) : null,
+    next: adjacent.next ? mapPostLink(adjacent.next) : null,
+  };
 }
 
 export function postHref(post: Pick<BlogPost, "slug" | "publishedAt">) {

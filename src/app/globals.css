@@ -150,6 +150,7 @@
 }
 
 html {
+  min-height: 100%;
   background: var(--wp--preset--color--custom);
 }
 
@@ -162,6 +163,16 @@ body {
   font-weight: 300;
   line-height: 1.6;
   letter-spacing: 0;
+}
+
+.wp-site-blocks {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.wp-site-blocks > footer.wp-block-template-part {
+  margin-top: auto;
 }
 
 a {
