@@ -49,7 +49,7 @@ export function AdminPostForm({
   const savedRangeRef = useRef<Range | null>(null);
   const isComposingRef = useRef(false);
   const initializedContentRef = useRef(false);
-  const initialContentHtml = useMemo(() => post?.contentHtml ?? "<p></p>", [post?.contentHtml]);
+  const initialContentHtml = useMemo(() => post?.contentHtml ?? "<p><br></p>", [post?.contentHtml]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const defaultCategoryId = useMemo(
@@ -64,7 +64,7 @@ export function AdminPostForm({
 
   function syncEditor() {
     if (contentInputRef.current) {
-      contentInputRef.current.value = editorRef.current?.innerHTML.trim() || "<p></p>";
+      contentInputRef.current.value = editorRef.current?.innerHTML.trim() || "<p><br></p>";
     }
   }
 
