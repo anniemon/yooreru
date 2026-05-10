@@ -273,6 +273,44 @@ export function ArchivePostList({ posts }: { posts: BlogPost[] }) {
   );
 }
 
+export function ArchivePagination({
+  basePath,
+  currentPage,
+  hasNext,
+}: {
+  basePath: string;
+  currentPage: number;
+  hasNext: boolean;
+}) {
+  if (currentPage <= 1 && !hasNext) {
+    return null;
+  }
+
+  const normalizedBasePath = basePath.endsWith("/") ? basePath : `${basePath}/`;
+  const previousHref = currentPage > 2 ? `${normalizedBasePath}page/${currentPage - 1}/` : normalizedBasePath;
+  const nextHref = `${normalizedBasePath}page/${currentPage + 1}/`;
+
+  return (
+    <div className="wp-block-group alignwide is-layout-flow wp-block-group-is-layout-flow archive-pagination-shell">
+      <nav
+        className="has-link-color alignwide wp-block-query-pagination has-text-color has-secondary-color has-background has-custom-color-3-background-color has-small-font-size has-dm-mono-font-family is-content-justification-space-between is-nowrap is-layout-flex wp-block-query-pagination-is-layout-flex archive-pagination"
+        aria-label="Pagination"
+      >
+        {currentPage > 1 ? (
+          <Link href={previousHref} className="wp-block-query-pagination-previous has-small-font-size">
+            Previous Page
+          </Link>
+        ) : null}
+        {hasNext ? (
+          <Link href={nextHref} className="wp-block-query-pagination-next has-small-font-size">
+            Next Page
+          </Link>
+        ) : null}
+      </nav>
+    </div>
+  );
+}
+
 export function QueryEmptyState({ message }: { message: string }) {
   return (
     <div className="alignwide query-empty-state">

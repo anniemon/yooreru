@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "./prisma";
+import type { PostGetPayload } from "@/generated/prisma/models";
 import {
   BlogCategory,
   BlogComment,
@@ -13,7 +14,20 @@ import {
 } from "./sample-data";
 import { formatDatePathParts, getZonedMonthKey } from "./time-zone";
 
-type DbPost = Awaited<ReturnType<typeof getDbPublishedPosts>>[number];
+const postInclude = {
+  category: { include: { parent: true, _count: { select: { posts: true } } } },
+  postTags: {
+    include: {
+      tag: { include: { _count: { select: { postTags: true } } } },
+    },
+  },
+  comments: {
+    where: { status: "PUBLISHED" },
+    orderBy: { createdAt: "asc" },
+  },
+} as const;
+
+type DbPost = PostGetPayload<{ include: typeof postInclude }>;
 
 function mapCategory(category: {
   id: number;
@@ -154,18 +168,7 @@ async function getDbPublishedPosts() {
       publishedAt: { lte: new Date() },
     },
     orderBy: [{ publishedAt: "desc" }],
-    include: {
-      category: { include: { parent: true, _count: { select: { posts: true } } } },
-      postTags: {
-        include: {
-          tag: { include: { _count: { select: { postTags: true } } } },
-        },
-      },
-      comments: {
-        where: { status: "PUBLISHED" },
-        orderBy: { createdAt: "asc" },
-      },
-    },
+    include: postInclude,
   });
 }
 
@@ -234,6 +237,42 @@ export async function getPostsByCategory(slugs: string[]) {
   const lastSlug = decodeURIComponent(slugs.at(-1) ?? "");
 
   return posts.filter((post) => post.categories[0]?.slug === lastSlug);
+}
+
+export async function getCategoryArchivePage(slugs: string[], page: number, pageSize: number) {
+  const lastSlug = decodeURIComponent(slugs.at(-1) ?? "");
+  const currentPage = Math.max(1, Math.floor(page));
+  const skip = (currentPage - 1) * pageSize;
+
+  if (!prisma) {
+    const posts = (await getPublishedPosts()).filter((post) => post.categories[0]?.slug === lastSlug);
+    const paginatedPosts = posts.slice(skip, skip + pageSize + 1);
+
+    return {
+      posts: paginatedPosts.slice(0, pageSize),
+      page: currentPage,
+      hasNext: paginatedPosts.length > pageSize,
+    };
+  }
+
+  const where = {
+    status: "PUBLISHED" as const,
+    publishedAt: { lte: new Date() },
+    category: { slug: lastSlug },
+  };
+  const posts = await prisma.post.findMany({
+    where,
+    orderBy: [{ publishedAt: "desc" }],
+    skip,
+    take: pageSize + 1,
+    include: postInclude,
+  });
+
+  return {
+    posts: posts.slice(0, pageSize).map(mapPost),
+    page: currentPage,
+    hasNext: posts.length > pageSize,
+  };
 }
 
 export async function getPostsByTag(slug: string) {
