@@ -10,6 +10,7 @@ import { XMLParser } from "fast-xml-parser";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { makeExcerpt, normalizeSlug, stripHtml } from "../src/lib/slug";
+import bcrypt from "bcryptjs";
 import sharp from "sharp";
 
 type AnyRecord = Record<string, any>;
@@ -37,6 +38,12 @@ type WpTerm = {
   slug: string;
   description: string;
   parentSlug?: string;
+};
+
+type WpAuthor = {
+  login: string;
+  email: string;
+  displayName: string;
 };
 
 const BLOG_IMAGE_MAX_DIMENSION = 1600;
@@ -324,6 +331,19 @@ function termsForChannel(channel: AnyRecord, key: "category" | "tag"): WpTerm[] 
     .filter((term) => term.name && term.slug);
 }
 
+function authorsForChannel(channel: AnyRecord): WpAuthor[] {
+  return asArray<AnyRecord>(channel?.author)
+    .map((author) => {
+      const login = text(author.author_login).trim();
+      return {
+        login,
+        email: text(author.author_email).trim() || `${login || "wordpress-author"}@wordpress.local`,
+        displayName: text(author.author_display_name).trim() || login,
+      };
+    })
+    .filter((author) => author.login && author.email);
+}
+
 function categoryDepth(slug: string, categoryBySlug: Map<string, WpTerm>) {
   let depth = 0;
   let current = categoryBySlug.get(slug);
@@ -375,6 +395,7 @@ async function main() {
   const uploadedByOriginalUrl = new Map<string, UploadedMedia>();
   const categoryTerms = termsForChannel(channel, "category");
   const tagTerms = termsForChannel(channel, "tag");
+  const authors = authorsForChannel(channel);
   const categoryTermsBySlug = new Map(categoryTerms.map((category) => [category.slug, category]));
 
   for (const item of items) {
@@ -406,9 +427,28 @@ async function main() {
 
   const categoryBySlug = new Map<string, number>();
   const tagBySlug = new Map<string, number>();
+  const authorByLogin = new Map<string, number>();
   let importedPosts = 0;
   let importedComments = 0;
   let importedMedia = 0;
+
+  const importedAuthorPasswordHash = await bcrypt.hash(hashValue(`wordpress-import:${file}`), 12);
+
+  for (const author of authors) {
+    const saved = await prisma.user.upsert({
+      where: { email: author.email },
+      update: {
+        name: author.displayName,
+      },
+      create: {
+        email: author.email,
+        name: author.displayName,
+        role: "AUTHOR",
+        passwordHash: importedAuthorPasswordHash,
+      },
+    });
+    authorByLogin.set(author.login, saved.id);
+  }
 
   for (const category of categoryTerms) {
     const saved = await prisma.category.upsert({
@@ -528,6 +568,7 @@ async function main() {
     const publishedAt = item.pubDate ? new Date(text(item.pubDate)) : null;
     const primaryCategory = primaryCategoryForPost(categoriesFor(item, "category"), categoryTermsBySlug);
     const categoryId = primaryCategory ? categoryBySlug.get(primaryCategory.slug) ?? null : null;
+    const authorId = authorByLogin.get(text(item.creator).trim()) ?? null;
     const tagConnections = categoriesFor(item, "post_tag")
       .map((tag) => tagBySlug.get(tag.slug))
       .filter(Boolean)
@@ -547,6 +588,7 @@ async function main() {
         featuredImageUrl,
         allowComments: text(item.comment_status) !== "closed",
         categoryId,
+        authorId,
       },
       create: {
         wordpressId: parseWpId(item.post_id),
@@ -561,6 +603,7 @@ async function main() {
         featuredImageUrl,
         allowComments: text(item.comment_status) !== "closed",
         categoryId,
+        authorId,
       },
     });
 
