@@ -708,6 +708,29 @@ button {
   padding: 10px 15px;
 }
 
+.footer-subscribe-form button:disabled {
+  cursor: progress;
+  opacity: 0.65;
+}
+
+.footer-subscribe-message {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  color: var(--wp--preset--color--primary);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.footer-subscribe-message.is-error {
+  color: #b42318;
+}
+
+.footer-subscribe-message button {
+  justify-self: start;
+  padding: 7px 12px;
+}
+
 .wp-block-query {
   width: min(100%, calc(var(--wp--style--global--wide-size) + 3rem));
   margin: 0 auto;

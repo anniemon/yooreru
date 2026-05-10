@@ -6,11 +6,18 @@ import { requirePrisma } from "@/lib/prisma";
 
 export async function subscribeEmail(email: string) {
   const db = requirePrisma();
-  const subscriber = await db.subscriber.upsert({
-    where: { email },
-    update: { status: "ACTIVE" },
-    create: { email },
-  });
+  const existing = await db.subscriber.findUnique({ where: { email } });
+
+  if (existing?.status === "ACTIVE") {
+    return { subscriber: existing, alreadySubscribed: true };
+  }
+
+  const subscriber = existing
+    ? await db.subscriber.update({
+        where: { id: existing.id },
+        data: { status: "ACTIVE" },
+      })
+    : await db.subscriber.create({ data: { email } });
 
   await sendMail({
     to: subscriber.email,
@@ -18,5 +25,5 @@ export async function subscribeEmail(email: string) {
     html: `<p>${SITE.name}의 새 글 알림을 받을 수 있습니다.</p>`,
   });
 
-  return subscriber;
+  return { subscriber, alreadySubscribed: false };
 }

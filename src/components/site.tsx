@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { HomeCalendarClient } from "@/components/home-calendar";
+import { SubscribeForm } from "@/components/subscribe-form";
 import { SITE } from "@/lib/constants";
-import { subscribe } from "@/app/actions";
 import { getCategories, getPublishedPosts, postHref } from "@/lib/content";
 import type { BlogCategory, BlogPost } from "@/lib/blog-types";
 import { formatWpDate as formatAppWpDate, getAppTimeZone, getZonedCalendarParts } from "@/lib/time-zone";
@@ -60,7 +60,7 @@ export function SiteHeader({ home = false }: { home?: boolean } = {}) {
   );
 }
 
-export function HomeToolbar({ subscribed = false }: { subscribed?: boolean }) {
+export function HomeToolbar() {
   return (
     <>
       <div style={{ height: "20px" }} aria-hidden="true" className="wp-block-spacer"></div>
@@ -102,7 +102,6 @@ export function HomeToolbar({ subscribed = false }: { subscribed?: boolean }) {
           </div>
         </div>
       </div>
-      {subscribed ? <p className="home-status-message">구독이 등록되었습니다.</p> : null}
       <div style={{ height: "30px" }} aria-hidden="true" className="wp-block-spacer"></div>
     </>
   );
@@ -196,19 +195,7 @@ export function SiteFooter() {
             <summary className="footer-subscribe-summary">
               <strong>구독하기</strong>
             </summary>
-            <form className="footer-subscribe-form" action={subscribe}>
-              <label className="screen-reader-text" htmlFor="footer-subscribe-email">
-                Email
-              </label>
-              <input
-                id="footer-subscribe-email"
-                name="email"
-                type="email"
-                placeholder="Enter your email address"
-                required
-              />
-              <button type="submit">Submit</button>
-            </form>
+            <SubscribeForm />
           </details>
         </div>
       </div>

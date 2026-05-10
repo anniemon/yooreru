@@ -28,6 +28,11 @@ const subscribeSchema = z.object({
   email: z.string().trim().email().max(180),
 });
 
+export type SubscribeState = {
+  ok: boolean;
+  message: string;
+};
+
 const contactSchema = z.object({
   senderName: z.string().trim().min(1).max(80),
   senderEmail: z.string().trim().email().max(160),
@@ -61,18 +66,20 @@ export async function createComment(postId: number, parentId: number | null, for
   redirect(`${href}#comments`);
 }
 
-export async function subscribe(formData: FormData) {
+export async function subscribe(_state: SubscribeState, formData: FormData): Promise<SubscribeState> {
   const parsed = subscribeSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    throw new Error("이메일 주소를 확인해 주세요.");
+    return { ok: false, message: "이메일 주소를 확인해 주세요." };
   }
 
-  await subscribeEmail(parsed.data.email);
+  const result = await subscribeEmail(parsed.data.email.toLowerCase());
 
   // Next.js 캐시 무효화
   revalidatePath("/");
-  // 구독 완료 메시지 표시용 쿼리스트링
-  redirect("/?subscribed=1");
+  return {
+    ok: true,
+    message: result.alreadySubscribed ? "이미 구독 중입니다." : "구독이 등록되었습니다.",
+  };
 }
 
 export async function sendContactMessage(formData: FormData) {

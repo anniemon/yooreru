@@ -13,9 +13,9 @@ import { searchPosts } from "@/lib/content";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ s?: string; subscribed?: string }>;
+  searchParams: Promise<{ s?: string }>;
 }) {
-  const { s, subscribed } = await searchParams;
+  const { s } = await searchParams;
   const query = s?.trim() ?? "";
 
   if (query) {
@@ -30,7 +30,7 @@ export default async function Home({
 
   return (
     <>
-      <HomeToolbar subscribed={subscribed === "1"} />
+      <HomeToolbar />
       <SiteHeader home />
       <HomeCategoryNavigation />
       <HomeCalendar />
