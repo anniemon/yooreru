@@ -25,6 +25,10 @@ function categoryLabel(category: AdminCategory, categories: AdminCategory[]) {
   return parent ? `${parent.name} / ${category.name}` : category.name;
 }
 
+function isPostCategoryOption(category: AdminCategory) {
+  return Boolean(category.parentId) && category.slug !== "geuneege" && category.name !== "그네에게";
+}
+
 function readImageDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -54,16 +58,17 @@ export function AdminPostForm({
     () => formatDateTimeLocal(post?.publishedAt ?? (!post?.id ? new Date() : null), timeZone),
     [post?.id, post?.publishedAt, timeZone],
   );
+  const categoryOptions = useMemo(() => categories.filter(isPostCategoryOption), [categories]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const defaultCategoryId = useMemo(
     () =>
       String(
         post?.category?.id ??
-          (!post?.id ? categories.find((category) => category.slug === "fingertip")?.id : "") ??
+          (!post?.id ? categoryOptions.find((category) => category.slug === "fingertip")?.id : "") ??
           "",
       ),
-    [categories, post?.category?.id, post?.id],
+    [categoryOptions, post?.category?.id, post?.id],
   );
 
   function syncEditor() {
@@ -291,7 +296,7 @@ export function AdminPostForm({
         카테고리
         <select name="categoryId" defaultValue={defaultCategoryId}>
           <option value="">미분류</option>
-          {categories.map((category) => (
+          {categoryOptions.map((category) => (
             <option key={category.id} value={String(category.id)}>
               {categoryLabel(category, categories)}
             </option>
