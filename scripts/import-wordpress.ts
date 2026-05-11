@@ -563,7 +563,7 @@ async function main() {
     }
 
     const contentHtml = replaceImageUrls(originalContentHtml, contentImageReplacements);
-    const slug = text(item.post_name) || normalizeSlug(title);
+    const slug = normalizeSlug(text(item.post_name) || title);
     const status = text(item.status) === "publish" ? "PUBLISHED" : "DRAFT";
     const publishedAt = item.pubDate ? new Date(text(item.pubDate)) : null;
     const primaryCategory = primaryCategoryForPost(categoriesFor(item, "category"), categoryTermsBySlug);

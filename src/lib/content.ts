@@ -230,35 +230,16 @@ export const getPublishedPostLinks = cache(async (): Promise<BlogPostLink[]> => 
   return posts.map(mapPostLink);
 });
 
-function uniqueValues(values: string[]) {
-  return Array.from(new Set(values.filter(Boolean)));
-}
-
-function safeDecodeURIComponent(value: string) {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
-function slugCandidates(slug: string) {
-  const decoded = safeDecodeURIComponent(slug);
-  const doubleDecoded = safeDecodeURIComponent(decoded);
-
-  return uniqueValues([slug, decoded, doubleDecoded]);
-}
-
-async function getDbPostsBySlugs(slugs: string[]) {
-  if (!prisma || !slugs.length) {
-    return [];
+async function getDbPostBySlug(slug: string) {
+  if (!prisma) {
+    return null;
   }
 
-  return prisma.post.findMany({
+  return prisma.post.findFirst({
     where: {
       status: "PUBLISHED",
       publishedAt: { lte: new Date() },
-      slug: { in: slugs },
+      slug,
     },
     orderBy: [{ publishedAt: "desc" }],
     include: postInclude,
@@ -267,23 +248,14 @@ async function getDbPostsBySlugs(slugs: string[]) {
 
 export const getPostByDateSlug = cache(
   async (year: string, month: string, day: string, slug: string) => {
-    const slugs = slugCandidates(slug);
-    const posts = (await getDbPostsBySlugs(slugs)).map(mapPost);
-    const post = posts.find((item) => {
-      if (!item.publishedAt) {
-        return false;
-      }
-      const dateParts = formatDatePathParts(item.publishedAt);
+    const dbPost = await getDbPostBySlug(decodeURIComponent(slug).normalize("NFC"));
+    if (!dbPost) {
+      notFound();
+    }
 
-      return (
-        slugs.includes(item.slug) &&
-        dateParts.year === year &&
-        dateParts.month === month &&
-        dateParts.day === day
-      );
-    });
-
-    if (!post) {
+    const post = mapPost(dbPost);
+    const dateParts = post.publishedAt ? formatDatePathParts(post.publishedAt) : null;
+    if (!dateParts || dateParts.year !== year || dateParts.month !== month || dateParts.day !== day) {
       notFound();
     }
 

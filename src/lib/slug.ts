@@ -1,6 +1,27 @@
+export function safeDecodeURIComponent(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+export function decodeSlug(input: string) {
+  let slug = input.trim();
+
+  for (let index = 0; index < 2; index += 1) {
+    const decoded = safeDecodeURIComponent(slug);
+    if (decoded === slug) {
+      break;
+    }
+    slug = decoded;
+  }
+
+  return slug.normalize("NFC");
+}
+
 export function normalizeSlug(input: string) {
-  return input
-    .trim()
+  return decodeSlug(input)
     .toLowerCase()
     .replace(/['"]/g, "")
     .replace(/[^a-z0-9가-힣ㄱ-ㅎㅏ-ㅣ一-龥]+/g, "-")
