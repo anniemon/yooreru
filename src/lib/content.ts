@@ -67,6 +67,36 @@ function mapTag(tag: {
   };
 }
 
+function getCategoryAndDescendantIds(categories: BlogCategory[], slug: string) {
+  const target = categories.find((category) => category.slug === slug);
+  if (!target) {
+    return [];
+  }
+
+  const childrenByParentSlug = new Map<string, BlogCategory[]>();
+  for (const category of categories) {
+    if (!category.parentSlug) {
+      continue;
+    }
+
+    childrenByParentSlug.set(category.parentSlug, [...(childrenByParentSlug.get(category.parentSlug) ?? []), category]);
+  }
+
+  const ids: number[] = [];
+  const stack = [target];
+  while (stack.length) {
+    const category = stack.pop();
+    if (!category) {
+      continue;
+    }
+
+    ids.push(category.id);
+    stack.push(...(childrenByParentSlug.get(category.slug) ?? []));
+  }
+
+  return ids;
+}
+
 function mapComment(comment: {
   id: number;
   postId: number;
@@ -291,9 +321,14 @@ export const getTags = cache(async () => {
 
 export async function getPostsByCategory(slugs: string[]) {
   const posts = await getPublishedPosts();
+  const categories = await getCategories();
   const lastSlug = decodeURIComponent(slugs.at(-1) ?? "");
+  const categoryIds = new Set(getCategoryAndDescendantIds(categories, lastSlug));
 
-  return posts.filter((post) => post.categories[0]?.slug === lastSlug);
+  return posts.filter((post) => {
+    const category = post.categories[0];
+    return category ? categoryIds.has(category.id) : false;
+  });
 }
 
 export async function getCategoryArchivePage(slugs: string[], page: number, pageSize: number) {
@@ -309,10 +344,20 @@ export async function getCategoryArchivePage(slugs: string[], page: number, page
     };
   }
 
+  const categories = await getCategories();
+  const categoryIds = getCategoryAndDescendantIds(categories, lastSlug);
+  if (!categoryIds.length) {
+    return {
+      posts: [],
+      page: currentPage,
+      hasNext: false,
+    };
+  }
+
   const where = {
     status: "PUBLISHED" as const,
     publishedAt: { lte: new Date() },
-    category: { slug: lastSlug },
+    categoryId: { in: categoryIds },
   };
   const posts = await prisma.post.findMany({
     where,
