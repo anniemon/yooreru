@@ -1,4 +1,13 @@
-# Done
+# 프로젝트 진행 상황
+
+## 현재 상태
+- 최신 커밋: cbf2312(Include descendant categories in archive)
+- 테스트 상태: 없음
+- 린트: 통과
+
+## 완료된 항목
+[x] ARCHITECTURE.md에 현재 코드베이스 아키텍처 정리
+[x] DECISIONS.md에 커밋 날짜 기반 주요 설계 결정 정리
 [x] Blob에 이미지 업로드(resizing 필요)
 [x] wordpress post 임포트 (카테고리별 7개씩 보이게 해야함)
 [x] Post의 authorId migration: Post 테이블의 authorId가 전부 null로 들어가있음. WordPress.2026-05-05.xml 파일 import할 때 author를 식별해서 Author 테이블에 넣고, 그 아이디를 Post에 넣어줘야함.
@@ -17,11 +26,18 @@
 [x] smoke test
 [x] https://www.yooreru.com/category/diary/ 에서 하위 카테고리의 모든 글 저자 상관 없이 보이게 하기
 
-# WIP
+## 진행 중
+- [어드민] 발행일 기본값 현재 날짜로 수정
+- 서비스 레이어 분리
+- 새로운 구독자 등록 시 어드민 이메일로 이메일 전송하기
 
-# TODO
-- 홈에서 요소 간격 조금씩 줄이고 달력 크기도 줄여서 전체 페이지가 스크롤 없이 렌더링되게 하기. 푸터 height도 조금 줄이기.
-- `그네에게`에 작성된 글 admin에서도 볼 수 있게 하기
-- 카테고리로 포스트 상세 페이지 들어갔을 때에는 Previous/Next 누르면 카테고리 내에서만 이동, 달력에서 포스트 눌렀을 때엔 전체 글 시간순 목록에서 이동
-- deploy hook 설정
+## 알려진 이슈
+- 로딩 인디케이터 없음
+- 전반적인 응답 지연 문제
+
+## 다음 단계
+- main branch push되면 vercel 자동 배포되는 deploy hook 설정
 - [어드민] 글자 서식/글꼴 변경 가능하게 해야함
+- 홈에서 요소 간격 조금씩 줄이고 달력 크기도 줄여서 전체 페이지가 스크롤 없이 렌더링되게 하기. 푸터 height도 조금 줄이기.
+- [어드민]`그네에게`에 작성된 글 admin에서도 볼 수 있게 하기
+- 카테고리로 포스트 상세 페이지 들어갔을 때에는 Previous/Next 누르면 카테고리 내에서만 이동, 달력에서 포스트 눌렀을 때엔 전체 글 시간순 목록에서 이동
