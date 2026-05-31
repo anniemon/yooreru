@@ -3,13 +3,15 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { authenticate, createSession, destroySession, requireAdmin } from "@/lib/auth";
-import { CONTENT_CACHE_TAG } from "@/lib/content";
-import { requirePrisma } from "@/lib/prisma";
+import { createSession, destroySession, requireAdmin } from "@/lib/auth";
+import { CONTENT_CACHE_TAG } from "@/services/content";
 import { deleteAdminCategory, saveAdminCategory } from "@/services/admin-categories";
 import { acceptAdminInvite, createAdminInvite } from "@/services/admin-invites";
 import { uploadAdminEditorImage } from "@/services/admin-media";
 import { notifySubscribersForPost, saveAdminPost } from "@/services/admin-posts";
+import { authenticateUser } from "@/services/auth";
+import { moderatePostComment } from "@/services/comments";
+import type { CommentStatus } from "@/generated/prisma/enums";
 
 const loginSchema = z.object({
   email: z.string().trim().email(),
@@ -81,7 +83,7 @@ export async function login(formData: FormData) {
     throw new Error("로그인 정보를 확인해 주세요.");
   }
 
-  const user = await authenticate(parsed.data.email, parsed.data.password);
+  const user = await authenticateUser(parsed.data.email, parsed.data.password);
   if (!user) {
     throw new Error("로그인 정보를 확인해 주세요.");
   }
@@ -140,11 +142,7 @@ export async function moderateComment(formData: FormData) {
     throw new Error("댓글 상태를 확인해 주세요.");
   }
 
-  const db = requirePrisma();
-  await db.comment.update({
-    where: { id },
-    data: { status: status as "PUBLISHED" | "HIDDEN" | "SPAM" | "PENDING" },
-  });
+  await moderatePostComment(id, status as CommentStatus);
 
   revalidatePath("/admin/comments");
 }

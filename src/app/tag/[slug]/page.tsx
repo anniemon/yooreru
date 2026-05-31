@@ -1,5 +1,5 @@
 import { ArchivePostList, ArchiveShell, QueryEmptyState } from "@/components/site";
-import { getPostsByTag, getTagBySlug } from "@/lib/content";
+import { getPostsByTag, getTagBySlug } from "@/services/content";
 
 export default async function TagPage({
   params,

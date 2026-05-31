@@ -1,7 +1,16 @@
 import "server-only";
 
-import { requirePrisma } from "@/lib/prisma";
+import { getPrisma, requirePrisma } from "@/lib/prisma";
 import { normalizeSlug } from "@/lib/slug";
+
+export type AdminCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  parentId: number | null;
+  description: string;
+  postCount: number;
+};
 
 export type SaveCategoryInput = {
   id: number | null;
@@ -10,6 +19,27 @@ export type SaveCategoryInput = {
   description?: string;
   parentId: number | null;
 };
+
+export async function getAdminCategories(): Promise<AdminCategory[]> {
+  const db = getPrisma();
+  if (!db) {
+    return [];
+  }
+
+  const categories = await db.category.findMany({
+    orderBy: [{ parentId: "asc" }, { name: "asc" }],
+    include: { _count: { select: { posts: true } } },
+  });
+
+  return categories.map((category) => ({
+    id: category.id,
+    name: category.name,
+    slug: category.slug,
+    parentId: category.parentId,
+    description: category.description,
+    postCount: category._count.posts,
+  }));
+}
 
 export async function saveAdminCategory(input: SaveCategoryInput) {
   const db = requirePrisma();

@@ -1,6 +1,7 @@
 import "server-only";
 
-import { requirePrisma } from "@/lib/prisma";
+import { getPrisma, requirePrisma } from "@/lib/prisma";
+import type { CommentStatus } from "@/generated/prisma/enums";
 
 export type CreateCommentInput = {
   postId: number;
@@ -32,4 +33,25 @@ export async function createPostComment(input: CreateCommentInput) {
   });
 
   return post;
+}
+
+export async function getAdminComments() {
+  const db = getPrisma();
+  if (!db) {
+    return [];
+  }
+
+  return db.comment.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { post: { select: { title: true } } },
+    take: 100,
+  });
+}
+
+export async function moderatePostComment(id: number, status: CommentStatus) {
+  const db = requirePrisma();
+  await db.comment.update({
+    where: { id },
+    data: { status },
+  });
 }

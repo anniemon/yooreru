@@ -1,7 +1,7 @@
 import { saveCategory, deleteCategory } from "@/app/admin/actions";
 import { AdminShell } from "@/components/admin-shell";
-import { getAdminCategories } from "@/lib/admin-categories";
 import { requireAdmin } from "@/lib/auth";
+import { getAdminCategories } from "@/services/admin-categories";
 
 export default async function AdminCategoriesPage() {
   await requireAdmin();

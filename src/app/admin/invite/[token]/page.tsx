@@ -1,5 +1,5 @@
 import { acceptInvite } from "@/app/admin/actions";
-import { prisma } from "@/lib/prisma";
+import { getAdminInviteByToken } from "@/services/admin-invites";
 
 export default async function AcceptInvitePage({
   params,
@@ -7,7 +7,7 @@ export default async function AcceptInvitePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const invite = prisma ? await prisma.invite.findUnique({ where: { token } }) : null;
+  const invite = await getAdminInviteByToken(token);
   const action = acceptInvite.bind(null, token);
 
   return (

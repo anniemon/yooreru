@@ -2,7 +2,7 @@ import Link from "next/link";
 import { HomeCalendarClient } from "@/components/home-calendar";
 import { SubscribeForm } from "@/components/subscribe-form";
 import { SITE } from "@/lib/constants";
-import { getCategories, getPublishedPostLinks, postHref } from "@/lib/content";
+import { getCategories, getPublishedPostLinks, postHref } from "@/services/content";
 import type { BlogCategory, BlogPost, BlogPostLink } from "@/lib/blog-types";
 import { formatWpDate as formatAppWpDate, getAppTimeZone, getZonedCalendarParts } from "@/lib/time-zone";
 

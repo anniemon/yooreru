@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { SITE } from "@/lib/constants";
 import { sendMail } from "@/lib/mail";
-import { requirePrisma } from "@/lib/prisma";
+import { getPrisma, requirePrisma } from "@/lib/prisma";
 import type { UserRole } from "@/generated/prisma/enums";
 
 export type CreateInviteInput = {
@@ -12,6 +12,18 @@ export type CreateInviteInput = {
   role: UserRole;
   invitedById: number;
 };
+
+export async function getAdminInviteByToken(token: string) {
+  const db = getPrisma();
+  if (!db) {
+    return null;
+  }
+
+  return db.invite.findUnique({
+    where: { token },
+    select: { email: true },
+  });
+}
 
 export async function createAdminInvite(input: CreateInviteInput) {
   const db = requirePrisma();

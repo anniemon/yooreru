@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import { AdminPostForm } from "@/components/admin-post-form";
 import { AdminShell } from "@/components/admin-shell";
-import { getAdminCategories } from "@/lib/admin-categories";
 import { requireAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { getAppTimeZone } from "@/lib/time-zone";
+import { getAdminCategories } from "@/services/admin-categories";
+import { getAdminPostForEdit } from "@/services/admin-posts";
 
 export default async function EditPostPage({
   params,
@@ -20,12 +20,7 @@ export default async function EditPostPage({
 
   const categories = await getAdminCategories();
   const timeZone = getAppTimeZone();
-  const post = prisma
-    ? await prisma.post.findUnique({
-        where: { id: postId },
-        include: { category: true, postTags: { include: { tag: true } } },
-      })
-    : null;
+  const post = await getAdminPostForEdit(postId);
 
   if (!post) {
     notFound();

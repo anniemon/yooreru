@@ -1,6 +1,6 @@
 import { Comments } from "@/components/comments";
 import { PostNavigation, PostTagLinks, SiteHeader, formatWpDate } from "@/components/site";
-import { getAdjacentPosts, getPostByDateSlug } from "@/lib/content";
+import { getAdjacentPosts, getPostByDateSlug } from "@/services/content";
 
 export default async function PostPage({
   params,

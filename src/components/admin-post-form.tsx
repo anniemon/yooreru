@@ -3,8 +3,8 @@
 import { useMemo, useRef, useState } from "react";
 import { ImagePlus, Save } from "lucide-react";
 import { savePost, uploadEditorImage } from "@/app/admin/actions";
-import type { AdminCategory } from "@/lib/admin-categories";
 import { formatDateTimeLocal } from "@/lib/time-zone";
+import type { AdminCategory } from "@/services/admin-categories";
 
 type PostFormValue = {
   id?: number;

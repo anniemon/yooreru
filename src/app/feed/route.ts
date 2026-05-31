@@ -1,5 +1,5 @@
 import { SITE } from "@/lib/constants";
-import { getPublishedPosts, postHref } from "@/lib/content";
+import { getPublishedPosts, postHref } from "@/services/content";
 import { cdata, escapeXml } from "@/lib/xml";
 
 export const dynamic = "force-dynamic";

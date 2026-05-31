@@ -20,8 +20,8 @@
 
 - `src/app`: App Router 라우트, Server Actions, feed route
 - `src/components`: 공개 블로그 UI, 댓글, 구독 폼, 어드민 UI 컴포넌트
-- `src/lib`: 인프라/도메인 공통 코드
-- `src/services`: 공개 액션에서 호출하는 쓰기 서비스 레이어
+- `src/lib`: 순수 유틸, 타입, 상수, Prisma/메일 같은 인프라 래퍼
+- `src/services`: DB 접근과 외부 쓰기 작업을 캡슐화하는 서비스/읽기 모델 레이어
 - `prisma`: Prisma schema, migration, DB 제약 문서
 - `scripts`: 관리자 seed, WordPress XML/CSV import, slug 정규화 스크립트
 
@@ -58,7 +58,7 @@ DB 제약 원칙은 [prisma/CONSTRAINTS.md](prisma/CONSTRAINTS.md)를 따른다.
 
 ## 읽기 흐름
 
-읽기 모델은 `src/lib/content.ts`에 모여 있다.
+읽기 모델은 `src/services/content.ts`에 모여 있다.
 
 1. Prisma에서 공개 가능한 게시글만 조회한다.
    `status = PUBLISHED`이고 `publishedAt <= now`인 게시글만 공개 페이지에 노출한다.
@@ -76,19 +76,22 @@ DB 제약 원칙은 [prisma/CONSTRAINTS.md](prisma/CONSTRAINTS.md)를 따른다.
 - `src/app/actions.ts`: 공개 댓글 작성, 구독 등록, 문의 메시지 전송
 - `src/app/admin/actions.ts`: 로그인/로그아웃, 게시글 저장, 카테고리 저장/삭제, 댓글 moderation, 이미지 업로드, 초대 생성/수락
 
-공개 쓰기는 `src/services`로 일부 분리되어 있다.
+DB 접근은 런타임 코드에서 `src/services`로 모은다. Server Action과 page는 입력 검증, 권한 확인, 캐시 무효화, redirect처럼 Next.js 경계에 가까운 일만 담당한다.
 
 - `comments.ts`: 댓글 생성과 게시글 댓글 허용 여부 확인
 - `subscribers.ts`: 구독자 upsert와 구독 확인 메일
 - `contact.ts`: 문의 메시지 저장과 관리자 알림
+- `content.ts`: 공개 게시글/카테고리/태그 읽기 모델과 캐시
+- `admin-posts.ts`, `admin-categories.ts`, `admin-invites.ts`, `admin-media.ts`: 어드민 게시글, 카테고리, 초대, 미디어 작업
+- `auth.ts`: DB 사용자 조회와 비밀번호 검증
 
-어드민 게시글 저장은 Server Action 안에서 검증, slug 정규화, excerpt 생성, 태그 upsert, 게시글-태그 재연결, 캐시 무효화, redirect까지 처리한다. 구독자 발송은 현재 동기 루프이며 코드에 별도 job 분리 TODO가 남아 있다.
+구독자 발송은 현재 동기 루프이며 코드에 별도 job 분리 TODO가 남아 있다.
 
 ## 인증과 권한
 
-어드민 인증은 `src/lib/auth.ts`가 담당한다.
+어드민 세션 쿠키는 `src/lib/auth.ts`가 담당하고, DB 사용자 조회와 비밀번호 검증은 `src/services/auth.ts`가 담당한다.
 
-- 로그인 시 DB의 `User`를 찾고 `bcrypt`로 비밀번호를 검증한다.
+- 로그인 시 서비스에서 DB의 `User`를 찾고 `bcrypt`로 비밀번호를 검증한다.
 - 검증된 사용자 정보를 HS256 JWT로 서명해 `yooreru_session` httpOnly 쿠키에 저장한다.
 - 세션 만료는 7일이다.
 - `requireAdmin()`은 세션이 없거나 role이 `ADMIN`이 아니면 `/admin/login`으로 redirect한다.
@@ -145,5 +148,4 @@ WordPress import에서는 이미지 URL을 수집해 다운로드하고, 최적�
 - 테스트 자동화가 아직 없다.
 - 로딩 인디케이터가 없다.
 - 전반적인 응답 지연 문제가 알려져 있다.
-- 공개 서비스 레이어는 분리 중이지만, 어드민 쓰기 로직은 아직 큰 Server Action 파일에 집중되어 있다.
 - 글 발행 이메일은 동기 실행이므로 구독자 수가 늘면 background job 또는 queue로 분리해야 한다.

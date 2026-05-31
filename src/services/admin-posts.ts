@@ -2,7 +2,7 @@ import "server-only";
 
 import { SITE } from "@/lib/constants";
 import { sendMail } from "@/lib/mail";
-import { requirePrisma } from "@/lib/prisma";
+import { getPrisma, requirePrisma } from "@/lib/prisma";
 import { makeExcerpt, normalizeSlug, stripHtml } from "@/lib/slug";
 import { formatDatePathParts, parseDateTimeLocalInTimeZone } from "@/lib/time-zone";
 import type { PostStatus } from "@/generated/prisma/enums";
@@ -21,6 +21,31 @@ export type SavePostInput = {
   categoryId: number | null;
   tags?: string;
 };
+
+export async function getAdminPostList() {
+  const db = getPrisma();
+  if (!db) {
+    return [];
+  }
+
+  return db.post.findMany({
+    orderBy: [{ updatedAt: "desc" }],
+    include: { _count: { select: { comments: true } } },
+    take: 50,
+  });
+}
+
+export async function getAdminPostForEdit(id: number) {
+  const db = getPrisma();
+  if (!db) {
+    return null;
+  }
+
+  return db.post.findUnique({
+    where: { id },
+    include: { category: true, postTags: { include: { tag: true } } },
+  });
+}
 
 function splitTerms(input?: string) {
   return (input ?? "")
