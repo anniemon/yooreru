@@ -11,7 +11,12 @@
 - 거부된 대안: 외부 인증 제공자 도입. 현재 요구 범위에서는 운영 복잡도가 크다.
 - 제약: 세션 쿠키 이름은 `yooreru_session`, 만료는 7일이다. `AUTHOR` role은 모델에 있으나 현재 주요 어드민 접근은 `ADMIN` 중심이다.
 
-## 2026-05-10: 공개 콘텐츠 읽기는 `src/lib/content.ts` 읽기 모델로 집중
+## 2026-05-31: 런타임 DB 접근은 `src/services`로 집중
+- 근거 커밋: `Separate admin service layer`, `Route runtime DB access through services`
+- 이유: `src/app`과 `src/lib`에 Prisma 호출이 흩어지면 page/action 경계와 도메인 DB 로직이 섞인다. 서비스 레이어를 단일 DB 접근 경계로 두면 권한, fallback, 캐시 무효화, 향후 테스트 지점을 명확히 나눌 수 있다.
+- 제약: `src/lib/prisma.ts`는 Prisma client 인프라만 담당한다. `src/lib`의 다른 파일은 DB를 직접 호출하지 않는다. 런타임 DB 읽기/쓰기는 `src/services`를 거치며, import/seed 같은 운영 스크립트는 별도 도구로 예외다.
+
+## 2026-05-10: 공개 콘텐츠 읽기는 `src/services/content.ts` 읽기 모델로 집중
 - 근거 커밋: `3daabd2` Implement blog and admin application, `648cf05` Fix post slug lookup and cache content queries, `af4103a` Avoid stale cache for post detail lookups
 - 이유: 공개 페이지들이 같은 게시글/카테고리/태그/댓글 매핑 규칙을 공유한다. WordPress 댓글 정리, 댓글 트리 구성, 이미지 속성 보정, 시간대 기반 URL 생성을 한 곳에서 유지한다.
 - 제약: 목록 조회는 `unstable_cache`와 React `cache`를 사용하지만, 게시글 상세는 stale cache를 피하기 위해 slug로 DB를 직접 조회하고 날짜 path를 검증한다.

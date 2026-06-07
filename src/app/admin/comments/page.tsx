@@ -1,17 +1,11 @@
 import { moderateComment } from "@/app/admin/actions";
 import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getAdminComments } from "@/services/comments";
 
 export default async function AdminCommentsPage() {
   await requireAdmin();
-  const comments = prisma
-    ? await prisma.comment.findMany({
-        orderBy: { createdAt: "desc" },
-        include: { post: { select: { title: true } } },
-        take: 100,
-      })
-    : [];
+  const comments = await getAdminComments();
 
   return (
     <AdminShell>

@@ -1,8 +1,8 @@
 import { AdminPostForm } from "@/components/admin-post-form";
 import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminCategories } from "@/lib/admin-categories";
 import { getAppTimeZone } from "@/lib/time-zone";
+import { getAdminCategories } from "@/services/admin-categories";
 
 export default async function NewPostPage() {
   await requireAdmin();

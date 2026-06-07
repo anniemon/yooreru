@@ -8,7 +8,7 @@ import {
   SiteFooter,
   SiteHeader,
 } from "@/components/site";
-import { searchPosts } from "@/lib/content";
+import { searchPosts } from "@/services/content";
 
 export default async function Home({
   searchParams,

@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { SITE } from "@/lib/constants";
-import { CONTENT_CACHE_TAG, postHref } from "@/lib/content";
+import { CONTENT_CACHE_TAG, postHref } from "@/services/content";
 import { createPostComment } from "@/services/comments";
 import { saveContactMessage } from "@/services/contact";
 import { subscribeEmail } from "@/services/subscribers";

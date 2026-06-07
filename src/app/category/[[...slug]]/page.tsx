@@ -1,5 +1,5 @@
 import { ArchivePagination, ArchivePostList, ArchiveShell, QueryEmptyState } from "@/components/site";
-import { getCategoryArchivePage, getCategoryBySlugs } from "@/lib/content";
+import { getCategoryArchivePage, getCategoryBySlugs } from "@/services/content";
 
 const POSTS_PER_CATEGORY_PAGE = 7;
 

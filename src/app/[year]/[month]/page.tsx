@@ -1,5 +1,5 @@
 import { ArchivePostList, ArchiveShell, QueryEmptyState, formatArchiveMonthTitle } from "@/components/site";
-import { getPostsByMonth } from "@/lib/content";
+import { getPostsByMonth } from "@/services/content";
 
 export default async function MonthArchive({
   params,

@@ -2,18 +2,14 @@ import Link from "next/link";
 import { createInvite } from "@/app/admin/actions";
 import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
-import { postHref } from "@/lib/content";
-import { prisma } from "@/lib/prisma";
+import { isDatabaseConfigured } from "@/services/database";
+import { getAdminPostList } from "@/services/admin-posts";
+import { postHref } from "@/services/content";
 
 export default async function AdminPage() {
   await requireAdmin();
-  const posts = prisma
-    ? await prisma.post.findMany({
-        orderBy: [{ updatedAt: "desc" }],
-        include: { _count: { select: { comments: true } } },
-        take: 50,
-      })
-    : [];
+  const posts = await getAdminPostList();
+  const hasDatabase = isDatabaseConfigured();
 
   return (
     <AdminShell>
@@ -26,7 +22,7 @@ export default async function AdminPage() {
           새 글
         </Link>
       </div>
-      {!prisma ? (
+      {!hasDatabase ? (
         <div className="admin-panel">
           <strong>DATABASE_URL이 없습니다.</strong>
           <p>현재 어드민 UI는 확인할 수 있지만 저장 작업은 DB 연결 후 동작합니다.</p>

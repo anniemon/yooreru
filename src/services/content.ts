@@ -2,11 +2,11 @@ import { createHash } from "node:crypto";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
-import { prisma } from "./prisma";
 import type { PostGetPayload } from "@/generated/prisma/models";
-import type { BlogCategory, BlogComment, BlogPost, BlogPostLink, BlogTag } from "./blog-types";
-import { cleanCommentContent } from "./slug";
-import { formatDatePathParts, getZonedMonthKey } from "./time-zone";
+import type { BlogCategory, BlogComment, BlogPost, BlogPostLink, BlogTag } from "@/lib/blog-types";
+import { getPrisma } from "@/lib/prisma";
+import { cleanCommentContent } from "@/lib/slug";
+import { formatDatePathParts, getZonedMonthKey } from "@/lib/time-zone";
 
 export const CONTENT_CACHE_TAG = "content";
 
@@ -206,11 +206,12 @@ function mapPostLink(post: BlogPostLink): BlogPostLink {
 }
 
 async function getDbPublishedPosts() {
-  if (!prisma) {
+  const db = getPrisma();
+  if (!db) {
     return [];
   }
 
-  return prisma.post.findMany({
+  return db.post.findMany({
     where: {
       status: "PUBLISHED",
       publishedAt: { lte: new Date() },
@@ -231,11 +232,12 @@ export const getPublishedPosts = cache(async () => {
 });
 
 async function getDbPublishedPostLinks() {
-  if (!prisma) {
+  const db = getPrisma();
+  if (!db) {
     return [];
   }
 
-  return prisma.post.findMany({
+  return db.post.findMany({
     where: {
       status: "PUBLISHED",
       publishedAt: { lte: new Date() },
@@ -261,11 +263,12 @@ export const getPublishedPostLinks = cache(async (): Promise<BlogPostLink[]> => 
 });
 
 async function getDbPostBySlug(slug: string) {
-  if (!prisma) {
+  const db = getPrisma();
+  if (!db) {
     return null;
   }
 
-  return prisma.post.findFirst({
+  return db.post.findFirst({
     where: {
       status: "PUBLISHED",
       publishedAt: { lte: new Date() },
@@ -294,11 +297,12 @@ export const getPostByDateSlug = cache(
 );
 
 export const getCategories = cache(async () => {
-  if (!prisma) {
+  const db = getPrisma();
+  if (!db) {
     return [];
   }
 
-  const categories = await prisma.category.findMany({
+  const categories = await db.category.findMany({
     orderBy: [{ parentId: "asc" }, { name: "asc" }],
     include: { parent: true, _count: { select: { posts: true } } },
   });
@@ -307,11 +311,12 @@ export const getCategories = cache(async () => {
 });
 
 export const getTags = cache(async () => {
-  if (!prisma) {
+  const db = getPrisma();
+  if (!db) {
     return [];
   }
 
-  const tags = await prisma.tag.findMany({
+  const tags = await db.tag.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { postTags: true } } },
   });
@@ -336,7 +341,8 @@ export async function getCategoryArchivePage(slugs: string[], page: number, page
   const currentPage = Math.max(1, Math.floor(page));
   const skip = (currentPage - 1) * pageSize;
 
-  if (!prisma) {
+  const db = getPrisma();
+  if (!db) {
     return {
       posts: [],
       page: currentPage,
@@ -359,7 +365,7 @@ export async function getCategoryArchivePage(slugs: string[], page: number, page
     publishedAt: { lte: new Date() },
     categoryId: { in: categoryIds },
   };
-  const posts = await prisma.post.findMany({
+  const posts = await db.post.findMany({
     where,
     orderBy: [{ publishedAt: "desc" }],
     skip,
@@ -452,7 +458,8 @@ export async function searchPosts(query: string) {
 }
 
 async function getAdjacentPostLinks(postId: number, publishedAtIso: string) {
-  if (!prisma) {
+  const db = getPrisma();
+  if (!db) {
     return {
       previous: null,
       next: null,
@@ -468,7 +475,7 @@ async function getAdjacentPostLinks(postId: number, publishedAtIso: string) {
   }
 
   const [previous, next] = await Promise.all([
-    prisma.post.findFirst({
+    db.post.findFirst({
       where: {
         id: { not: postId },
         status: "PUBLISHED",
@@ -482,7 +489,7 @@ async function getAdjacentPostLinks(postId: number, publishedAtIso: string) {
         publishedAt: true,
       },
     }),
-    prisma.post.findFirst({
+    db.post.findFirst({
       where: {
         id: { not: postId },
         status: "PUBLISHED",
