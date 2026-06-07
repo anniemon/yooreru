@@ -37,17 +37,17 @@
 - 전반적인 응답 지연 문제
 
 ## 다음 단계
+- main branch push되면 vercel 자동 배포되는 deploy hook 설정
+- [어드민] 글 작성 시 font 바꿀 수 있도록 지원: 명조(을유 1945), 순바탕, 고딕(Noto Sans Kr, Pretendard)
+- 새로운 댓글 달릴 시 글 저자에게 이메일 알림 발송(본인이 남긴 댓글/대댓글 제외)
+- 새로운 구독자 등록 시 어드민 이메일로 이메일 전송하기
 - [페이지네이션] 어드민 게시글 목록: `getAdminPostList`가 최근 50개만 고정 조회하고 pagination UI/API가 없음
 - [페이지네이션] 어드민 댓글 목록: `getAdminComments`가 최근 100개만 고정 조회하고 pagination UI/API가 없음
 - [페이지네이션] 공개 검색 결과: `searchPosts`가 전체 공개 글을 메모리 필터링하고 결과 pagination이 없음
 - [페이지네이션] 태그 아카이브: `getPostsByTag`가 전체 공개 글을 메모리 필터링하고 pagination이 없음
 - [페이지네이션] 월별 아카이브: `getPostsByMonth`가 전체 공개 글을 메모리 필터링하고 pagination이 없음
 - [배치 처리] 발행 알림 구독자 조회: `notifySubscribersForPost`가 모든 ACTIVE 구독자를 한 번에 조회/처리하므로 cursor 기반 batch 처리가 필요
-- 새로운 댓글 달릴 시 글 저자에게 이메일 알림 발송(본인이 남긴 댓글/대댓글 제외)
-- [어드민] 글 작성 시 font 바꿀 수 있도록 지원: 명조(을유 1945), 순바탕, 고딕(Noto Sans Kr, Pretendard)
 - [어드민] 모바일 반응형 지원
-- 새로운 구독자 등록 시 어드민 이메일로 이메일 전송하기
-- main branch push되면 vercel 자동 배포되는 deploy hook 설정
 - 홈에서 요소 간격 조금씩 줄이고 달력 크기도 줄여서 전체 페이지가 스크롤 없이 렌더링되게 하기. 푸터 height도 조금 줄이기.
 - [어드민]`그네에게`에 작성된 글 admin에서도 볼 수 있게 하기
 - 카테고리로 포스트 상세 페이지 들어갔을 때에는 Previous/Next 누르면 카테고리 내에서만 이동, 달력에서 포스트 눌렀을 때엔 전체 글 시간순 목록에서 이동
