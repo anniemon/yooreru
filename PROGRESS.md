@@ -1,7 +1,7 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 커밋: Address PR review comments
+- 최신 커밋: Track pagination follow-ups
 - 테스트 상태: 없음
 - 린트/빌드: 통과
 
@@ -37,6 +37,12 @@
 - 전반적인 응답 지연 문제
 
 ## 다음 단계
+- [페이지네이션] 어드민 게시글 목록: `getAdminPostList`가 최근 50개만 고정 조회하고 pagination UI/API가 없음
+- [페이지네이션] 어드민 댓글 목록: `getAdminComments`가 최근 100개만 고정 조회하고 pagination UI/API가 없음
+- [페이지네이션] 공개 검색 결과: `searchPosts`가 전체 공개 글을 메모리 필터링하고 결과 pagination이 없음
+- [페이지네이션] 태그 아카이브: `getPostsByTag`가 전체 공개 글을 메모리 필터링하고 pagination이 없음
+- [페이지네이션] 월별 아카이브: `getPostsByMonth`가 전체 공개 글을 메모리 필터링하고 pagination이 없음
+- [배치 처리] 발행 알림 구독자 조회: `notifySubscribersForPost`가 모든 ACTIVE 구독자를 한 번에 조회/처리하므로 cursor 기반 batch 처리가 필요
 - 새로운 댓글 달릴 시 글 저자에게 이메일 알림 발송(본인이 남긴 댓글/대댓글 제외)
 - [어드민] 글 작성 시 font 바꿀 수 있도록 지원: 명조(을유 1945), 순바탕, 고딕(Noto Sans Kr, Pretendard)
 - [어드민] 모바일 반응형 지원
