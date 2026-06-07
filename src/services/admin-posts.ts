@@ -144,33 +144,35 @@ export async function notifySubscribersForPost(postId: number) {
   const { year, month, day } = formatDatePathParts(post.publishedAt ?? new Date());
   const href = `${SITE.url}/${year}/${month}/${day}/${encodeURIComponent(post.slug)}/`;
 
-  for (const subscriber of subscribers) {
-    try {
-      const result = await sendMail({
-        to: subscriber.email,
-        subject: post.title,
-        html: `<p><a href="${href}">${post.title}</a></p>${post.contentHtml}`,
-      });
-      await db.emailDelivery.create({
-        data: {
-          subscriberId: subscriber.id,
-          postId: post.id,
+  await Promise.allSettled(
+    subscribers.map(async (subscriber) => {
+      try {
+        const result = await sendMail({
+          to: subscriber.email,
           subject: post.title,
-          status: "SENT",
-          providerId: "id" in result ? String(result.id) : null,
-          sentAt: new Date(),
-        },
-      });
-    } catch (error) {
-      await db.emailDelivery.create({
-        data: {
-          subscriberId: subscriber.id,
-          postId: post.id,
-          subject: post.title,
-          status: "FAILED",
-          error: error instanceof Error ? error.message : "Unknown error",
-        },
-      });
-    }
-  }
+          html: `<p><a href="${href}">${post.title}</a></p>${post.contentHtml}`,
+        });
+        await db.emailDelivery.create({
+          data: {
+            subscriberId: subscriber.id,
+            postId: post.id,
+            subject: post.title,
+            status: "SENT",
+            providerId: "id" in result ? String(result.id) : null,
+            sentAt: new Date(),
+          },
+        });
+      } catch (error) {
+        await db.emailDelivery.create({
+          data: {
+            subscriberId: subscriber.id,
+            postId: post.id,
+            subject: post.title,
+            status: "FAILED",
+            error: error instanceof Error ? error.message : "Unknown error",
+          },
+        });
+      }
+    }),
+  );
 }

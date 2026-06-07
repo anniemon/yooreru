@@ -57,24 +57,28 @@ export async function acceptAdminInvite({
   password: string;
 }) {
   const db = requirePrisma();
-  const invite = await db.invite.findUnique({ where: { token } });
-  if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) {
-    throw new Error("유효하지 않은 초대입니다.");
-  }
+  const passwordHash = await bcrypt.hash(password, 12);
 
-  const user = await db.user.create({
-    data: {
-      email: invite.email,
-      name,
-      passwordHash: await bcrypt.hash(password, 12),
-      role: invite.role,
-    },
+  return db.$transaction(async (tx) => {
+    const invite = await tx.invite.findUnique({ where: { token } });
+    if (!invite || invite.acceptedAt || invite.expiresAt < new Date()) {
+      throw new Error("유효하지 않은 초대입니다.");
+    }
+
+    const user = await tx.user.create({
+      data: {
+        email: invite.email,
+        name,
+        passwordHash,
+        role: invite.role,
+      },
+    });
+
+    await tx.invite.update({
+      where: { id: invite.id },
+      data: { acceptedAt: new Date() },
+    });
+
+    return user;
   });
-
-  await db.invite.update({
-    where: { id: invite.id },
-    data: { acceptedAt: new Date() },
-  });
-
-  return user;
 }

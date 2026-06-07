@@ -1,7 +1,7 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 커밋: Route runtime DB access through services
+- 최신 커밋: Address PR review comments
 - 테스트 상태: 없음
 - 린트/빌드: 통과
 
@@ -27,6 +27,7 @@
 - [x] https://www.yooreru.com/category/diary/ 에서 하위 카테고리의 모든 글 저자 상관 없이 보이게 하기
 - [x] 서비스 레이어 분리
 - [x] 런타임 DB 접근을 서비스 레이어 경유로 정리
+- [x] PR #3 리뷰 코멘트 중 유효한 항목 반영
 
 ## 진행 중
 - 없음
