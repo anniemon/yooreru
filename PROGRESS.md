@@ -2,8 +2,8 @@
 
 ## 현재 상태
 - 최신 커밋: Track pagination follow-ups
-- 테스트 상태: 없음
-- 린트/빌드: 통과
+- 테스트 상태: `git diff --check` 통과
+- 린트/빌드: 미실행 (문서/CI 설정만 변경)
 
 ## 완료된 항목
 - [x] ARCHITECTURE.md에 현재 코드베이스 아키텍처 정리
@@ -28,16 +28,16 @@
 - [x] 서비스 레이어 분리
 - [x] 런타임 DB 접근을 서비스 레이어 경유로 정리
 - [x] PR #3 리뷰 코멘트 중 유효한 항목 반영
+- [x] main branch push 시 Vercel deploy hook을 호출하는 GitHub Actions workflow 추가
 
 ## 진행 중
-- 없음
+- 커밋 승인 대기: Vercel deploy hook workflow 추가
 
 ## 알려진 이슈
 - 로딩 인디케이터 없음
 - 전반적인 응답 지연 문제
 
 ## 다음 단계
-- main branch push되면 vercel 자동 배포되는 deploy hook 설정
 - [어드민] 글 작성 시 font 바꿀 수 있도록 지원: 명조(을유 1945), 순바탕, 고딕(Noto Sans Kr, Pretendard)
 - 새로운 댓글 달릴 시 글 저자에게 이메일 알림 발송(본인이 남긴 댓글/대댓글 제외)
 - 새로운 구독자 등록 시 어드민 이메일로 이메일 전송하기
