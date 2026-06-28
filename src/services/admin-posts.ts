@@ -22,6 +22,8 @@ export type SavePostInput = {
   tags?: string;
 };
 
+export type AutosavePostInput = Omit<SavePostInput, "publishedAt" | "status">;
+
 export async function getAdminPostList() {
   const db = getPrisma();
   if (!db) {
@@ -83,6 +85,31 @@ async function connectTags(names: string[]) {
   );
 
   return tags.map((tag) => ({ id: tag.id }));
+}
+
+export async function autosaveAdminPost(input: AutosavePostInput) {
+  const db = requirePrisma();
+
+  if (input.id) {
+    const existing = await db.post.findUnique({
+      where: { id: input.id },
+      select: { status: true },
+    });
+
+    if (!existing) {
+      throw new Error("게시글을 확인해 주세요.");
+    }
+
+    if (existing.status !== "DRAFT") {
+      throw new Error("발행 또는 예약된 글은 자동 임시 저장하지 않습니다.");
+    }
+  }
+
+  return saveAdminPost({
+    ...input,
+    status: "DRAFT",
+    publishedAt: undefined,
+  });
 }
 
 export async function saveAdminPost(input: SavePostInput) {

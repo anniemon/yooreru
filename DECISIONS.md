@@ -1,5 +1,10 @@
 # 설계 결정
 
+## 2026-06-28: 어드민 세션 도메인은 apex host로 고정하고 자동 저장은 초안에만 적용
+- 근거 커밋: `Add admin autosave and canonical redirect`
+- 이유: 세션 쿠키는 host-only로 발급되므로 `www.yooreru.com`과 `yooreru.com`을 섞어 쓰면 7일 이내에도 로그인 상태가 분리된다. `/admin` 요청만 apex host로 모아 세션 도메인 혼선을 줄인다.
+- 제약: 공개 페이지는 `www` redirect 대상에서 제외한다. 자동 임시 저장은 10분 간격으로 새 글과 기존 초안에만 적용하고, 발행/예약 글은 명시적 저장 없이 조용히 덮어쓰지 않는다.
+
 ## 2026-06-28: 어드민 본문 글꼴 선택은 저장 HTML의 font-family class로 보존
 - 근거 커밋: `Add admin post font picker`
 - 이유: 게시글 본문은 이미 `Post.contentHtml`로 저장되고 공개 페이지에서 WordPress 호환 class를 전역 CSS로 렌더링한다. 글꼴 선택을 별도 DB 컬럼으로 분리하면 블록/부분 선택 글꼴을 표현하기 어렵고 기존 WordPress식 HTML 구조와도 어긋난다.

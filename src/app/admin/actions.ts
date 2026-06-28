@@ -4,11 +4,12 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSession, destroySession, requireAdmin } from "@/lib/auth";
+import { stripHtml } from "@/lib/slug";
 import { CONTENT_CACHE_TAG } from "@/services/content";
 import { deleteAdminCategory, saveAdminCategory } from "@/services/admin-categories";
 import { acceptAdminInvite, createAdminInvite } from "@/services/admin-invites";
 import { uploadAdminEditorImage } from "@/services/admin-media";
-import { notifySubscribersForPost, saveAdminPost } from "@/services/admin-posts";
+import { autosaveAdminPost, notifySubscribersForPost, saveAdminPost } from "@/services/admin-posts";
 import { authenticateUser } from "@/services/auth";
 import { moderatePostComment } from "@/services/comments";
 import type { CommentStatus } from "@/generated/prisma/enums";
@@ -32,6 +33,21 @@ const postSchema = z.object({
   tags: z.string().optional(),
   notifySubscribers: z.string().optional(),
 });
+
+const autosavePostSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().trim().max(220).optional(),
+  slug: z.string().trim().optional(),
+  excerpt: z.string().trim().optional(),
+  contentHtml: z.string().trim().min(1),
+  status: z.enum(["DRAFT", "PUBLISHED", "SCHEDULED"]),
+  featuredImageUrl: z.string().trim().url().optional().or(z.literal("")),
+  allowComments: z.string().optional(),
+  categoryId: z.string().optional(),
+  tags: z.string().optional(),
+});
+
+const AUTOSAVE_FALLBACK_TITLE = "임시 저장";
 
 const categorySchema = z.object({
   id: z.string().optional(),
@@ -75,6 +91,10 @@ function parseSubmittedOptionalId(input: string | undefined, message: string) {
   }
 
   return id;
+}
+
+function hasAutosaveContent(title: string, contentHtml: string) {
+  return Boolean(title || stripHtml(contentHtml) || /<img\b/i.test(contentHtml));
 }
 
 export async function login(formData: FormData) {
@@ -131,6 +151,38 @@ export async function savePost(formData: FormData) {
   revalidatePath("/");
   revalidateTag(CONTENT_CACHE_TAG, "max");
   redirect("/admin");
+}
+
+export async function autosavePost(formData: FormData) {
+  const user = await requireAdmin();
+  const parsed = autosavePostSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    throw new Error("자동 임시 저장 입력값을 확인해 주세요.");
+  }
+
+  const data = parsed.data;
+  const postId = parseSubmittedOptionalId(data.id, "게시글을 확인해 주세요.");
+  const selectedCategoryId = parseSubmittedOptionalId(data.categoryId, "카테고리를 확인해 주세요.");
+  const title = data.title?.trim() ?? "";
+
+  if (data.status !== "DRAFT" || !hasAutosaveContent(title, data.contentHtml)) {
+    return { skipped: true as const, id: postId };
+  }
+
+  const post = await autosaveAdminPost({
+    id: postId,
+    title: title || AUTOSAVE_FALLBACK_TITLE,
+    slug: data.slug,
+    excerpt: data.excerpt,
+    contentHtml: data.contentHtml,
+    featuredImageUrl: data.featuredImageUrl,
+    allowComments: data.allowComments === "on",
+    authorId: user.id,
+    categoryId: selectedCategoryId,
+    tags: data.tags,
+  });
+
+  return { skipped: false as const, id: post.id, savedAt: new Date().toISOString() };
 }
 
 export async function moderateComment(formData: FormData) {

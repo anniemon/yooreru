@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ALargeSmall, ImagePlus, Save } from "lucide-react";
-import { savePost, uploadEditorImage } from "@/app/admin/actions";
+import { autosavePost, savePost, uploadEditorImage } from "@/app/admin/actions";
 import { formatDateTimeLocal } from "@/lib/time-zone";
 import type { AdminCategory } from "@/services/admin-categories";
 
@@ -19,6 +19,20 @@ type PostFormValue = {
   category?: { id?: number; name: string } | null;
   tags?: { name: string }[];
 };
+
+const AUTOSAVE_INTERVAL_MS = 10 * 60 * 1000;
+const AUTOSAVE_FIELD_NAMES = [
+  "id",
+  "title",
+  "slug",
+  "excerpt",
+  "contentHtml",
+  "status",
+  "featuredImageUrl",
+  "allowComments",
+  "categoryId",
+  "tags",
+] as const;
 
 const FONT_OPTIONS = [
   { label: "기본", className: "" },
@@ -50,6 +64,31 @@ function readImageDataUrl(file: File) {
   });
 }
 
+function isBlankEditorHtml(contentHtml: string) {
+  if (/<img\b/i.test(contentHtml)) {
+    return false;
+  }
+
+  const template = document.createElement("template");
+  template.innerHTML = contentHtml;
+  return !template.content.textContent?.trim();
+}
+
+function hasAutosaveContent(title: string, contentHtml: string) {
+  return Boolean(title || !isBlankEditorHtml(contentHtml));
+}
+
+function createAutosaveFingerprint(formData: FormData) {
+  return JSON.stringify(AUTOSAVE_FIELD_NAMES.map((name) => [name, formData.get(name) ?? ""]));
+}
+
+function formatAutosaveTime(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 export function AdminPostForm({
   post,
   categories,
@@ -59,20 +98,28 @@ export function AdminPostForm({
   categories: AdminCategory[];
   timeZone: string;
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const contentInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const autosaveInFlightRef = useRef(false);
+  const lastAutosaveSnapshotRef = useRef("");
   const isComposingRef = useRef(false);
   const initializedContentRef = useRef(false);
   const initialContentHtml = useMemo(() => post?.contentHtml ?? "<p><br></p>", [post?.contentHtml]);
+  const autosaveAllowed = !post?.id || post.status === "DRAFT";
   const defaultPublishedAt = useMemo(
     () => formatDateTimeLocal(post?.publishedAt ?? (!post?.id ? new Date() : null), timeZone),
     [post?.id, post?.publishedAt, timeZone],
   );
   const categoryOptions = useMemo(() => categories.filter(isPostCategoryOption), [categories]);
+  const [postId, setPostId] = useState<number | null>(post?.id ?? null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [autosaving, setAutosaving] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState("");
+  const [autosaveError, setAutosaveError] = useState("");
   const defaultCategoryId = useMemo(
     () =>
       String(
@@ -83,11 +130,11 @@ export function AdminPostForm({
     [categoryOptions, post?.category?.id, post?.id],
   );
 
-  function syncEditor() {
+  const syncEditor = useCallback(() => {
     if (contentInputRef.current) {
       contentInputRef.current.value = editorRef.current?.innerHTML.trim() || "<p><br></p>";
     }
-  }
+  }, []);
 
   function setEditorNode(node: HTMLDivElement | null) {
     editorRef.current = node;
@@ -300,9 +347,74 @@ export function AdminPostForm({
     }
   }
 
+  const runAutosave = useCallback(async () => {
+    if (!autosaveAllowed || uploadingImage || autosaveInFlightRef.current || !formRef.current) {
+      return;
+    }
+
+    syncEditor();
+    const formData = new FormData(formRef.current);
+    if (postId) {
+      formData.set("id", String(postId));
+    }
+
+    if (String(formData.get("status") ?? "") !== "DRAFT") {
+      return;
+    }
+
+    const title = String(formData.get("title") ?? "").trim();
+    const contentHtml = String(formData.get("contentHtml") ?? "").trim();
+    if (!hasAutosaveContent(title, contentHtml)) {
+      return;
+    }
+
+    const snapshot = createAutosaveFingerprint(formData);
+    if (snapshot === lastAutosaveSnapshotRef.current) {
+      return;
+    }
+
+    autosaveInFlightRef.current = true;
+    setAutosaving(true);
+    setAutosaveError("");
+
+    try {
+      const result = await autosavePost(formData);
+      if (result.skipped) {
+        return;
+      }
+
+      if (result.id !== postId) {
+        formData.set("id", String(result.id));
+        setPostId(result.id);
+        if (window.location.pathname === "/admin/posts/new") {
+          window.history.replaceState(null, "", `/admin/posts/${result.id}/edit`);
+        }
+      }
+      lastAutosaveSnapshotRef.current = createAutosaveFingerprint(formData);
+      setAutosaveStatus(`${formatAutosaveTime(result.savedAt)} 임시 저장됨`);
+    } catch (error) {
+      setAutosaveError(error instanceof Error ? error.message : "자동 임시 저장에 실패했습니다.");
+    } finally {
+      autosaveInFlightRef.current = false;
+      setAutosaving(false);
+    }
+  }, [autosaveAllowed, postId, syncEditor, uploadingImage]);
+
+  useEffect(() => {
+    if (!autosaveAllowed) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      void runAutosave();
+    }, AUTOSAVE_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [autosaveAllowed, runAutosave]);
+
   return (
-    <form className="admin-panel editor-form" action={savePost}>
-      {post?.id ? <input type="hidden" name="id" value={post.id} /> : null}
+    <form ref={formRef} className="admin-panel editor-form" action={savePost}>
+      {postId ? <input type="hidden" name="id" value={postId} /> : null}
       <input ref={contentInputRef} type="hidden" name="contentHtml" defaultValue={initialContentHtml} />
 
       <label>
@@ -357,6 +469,9 @@ export function AdminPostForm({
         </div>
         {uploadError ? <p className="admin-editor-error">{uploadError}</p> : null}
         {uploadingImage ? <p className="admin-editor-status">이미지를 업로드하고 있습니다.</p> : null}
+        {autosaveError ? <p className="admin-editor-error">{autosaveError}</p> : null}
+        {autosaving ? <p className="admin-editor-status">임시 저장 중입니다.</p> : null}
+        {autosaveStatus ? <p className="admin-editor-status">{autosaveStatus}</p> : null}
         <div
           ref={setEditorNode}
           className="admin-rich-editor"
