@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ADMIN_CANONICAL_HOST = "yooreru.com";
-const ADMIN_REDIRECT_HOST = "www.yooreru.com";
+const ADMIN_CANONICAL_HOST = "www.yooreru.com";
+const ADMIN_REDIRECT_HOST = "yooreru.com";
 
 export function proxy(request: NextRequest) {
   if (requestHost(request) === ADMIN_REDIRECT_HOST && isAdminPath(request.nextUrl.pathname)) {

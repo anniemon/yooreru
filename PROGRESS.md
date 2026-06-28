@@ -1,8 +1,8 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 커밋: Add admin autosave and canonical redirect
-- 테스트 상태: `npm run lint`, `npm run build` 통과
+- 최신 커밋: Fix admin canonical redirect loop
+- 테스트 상태: `npm run lint`, `npm run build`, local redirect smoke test 통과
 - 린트/빌드: 통과
 
 ## 완료된 항목
@@ -32,6 +32,7 @@
 - [x] [어드민] 글 작성 시 font 바꿀 수 있도록 지원: Noto Serif KR, Noto Sans KR, Pretendard
 - [x] [어드민] www/admin 접근 시 canonical host로 redirect해 세션 도메인 혼선을 방지
 - [x] [어드민] 글 작성 중 10분마다 초안 자동 임시 저장
+- [x] [어드민] 운영 canonical host와 반대 방향으로 redirect되어 발생한 `ERR_TOO_MANY_REDIRECTS` 수정
 
 ## 진행 중
 - 없음

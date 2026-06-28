@@ -1,9 +1,9 @@
 # 설계 결정
 
-## 2026-06-28: 어드민 세션 도메인은 apex host로 고정하고 자동 저장은 초안에만 적용
-- 근거 커밋: `Add admin autosave and canonical redirect`
-- 이유: 세션 쿠키는 host-only로 발급되므로 `www.yooreru.com`과 `yooreru.com`을 섞어 쓰면 7일 이내에도 로그인 상태가 분리된다. `/admin` 요청만 apex host로 모아 세션 도메인 혼선을 줄인다.
-- 제약: 공개 페이지는 `www` redirect 대상에서 제외한다. 자동 임시 저장은 10분 간격으로 새 글과 기존 초안에만 적용하고, 발행/예약 글은 명시적 저장 없이 조용히 덮어쓰지 않는다.
+## 2026-06-28: 어드민 세션 도메인은 www host로 고정하고 자동 저장은 초안에만 적용
+- 근거 커밋: `Add admin autosave and canonical redirect`, `Fix admin canonical redirect loop`
+- 이유: 세션 쿠키는 host-only로 발급되므로 `www.yooreru.com`과 `yooreru.com`을 섞어 쓰면 7일 이내에도 로그인 상태가 분리된다. 운영 도메인은 Vercel에서 apex를 `www.yooreru.com`으로 보내고 있으므로 `/admin`도 같은 방향으로 모아 리다이렉트 루프와 세션 도메인 혼선을 방지한다.
+- 제약: 공개 페이지는 앱의 `/admin` redirect 대상에서 제외한다. 자동 임시 저장은 10분 간격으로 새 글과 기존 초안에만 적용하고, 발행/예약 글은 명시적 저장 없이 조용히 덮어쓰지 않는다.
 
 ## 2026-06-28: 어드민 본문 글꼴 선택은 저장 HTML의 font-family class로 보존
 - 근거 커밋: `Add admin post font picker`
