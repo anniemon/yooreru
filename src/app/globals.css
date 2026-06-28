@@ -117,6 +117,114 @@
     format("woff2");
 }
 
+@font-face {
+  font-family: "Noto Sans KR";
+  font-style: normal;
+  font-weight: 300;
+  font-display: fallback;
+  src: url("https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzrQyeLQ.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Noto Sans KR";
+  font-style: normal;
+  font-weight: 400;
+  font-display: fallback;
+  src: url("https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzuoyeLQ.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Noto Sans KR";
+  font-style: normal;
+  font-weight: 500;
+  font-display: fallback;
+  src: url("https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzztgyeLQ.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Noto Sans KR";
+  font-style: normal;
+  font-weight: 700;
+  font-display: fallback;
+  src: url("https://fonts.gstatic.com/s/notosanskr/v39/PbyxFmXiEBPT4ITbgNA5Cgms3VYcOA-vvnIzzg01eLQ.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Noto Serif KR";
+  font-style: normal;
+  font-weight: 300;
+  font-display: fallback;
+  src: url("https://fonts.gstatic.com/s/notoserifkr/v31/3JnoSDn90Gmq2mr3blnHaTZXbOtLJDvui3JOnci4eM52.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Noto Serif KR";
+  font-style: normal;
+  font-weight: 400;
+  font-display: fallback;
+  src: url("https://fonts.gstatic.com/s/notoserifkr/v31/3JnoSDn90Gmq2mr3blnHaTZXbOtLJDvui3JOncjmeM52.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Noto Serif KR";
+  font-style: normal;
+  font-weight: 500;
+  font-display: fallback;
+  src: url("https://fonts.gstatic.com/s/notoserifkr/v31/3JnoSDn90Gmq2mr3blnHaTZXbOtLJDvui3JOncjUeM52.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: "Noto Serif KR";
+  font-style: normal;
+  font-weight: 700;
+  font-display: fallback;
+  src: url("https://fonts.gstatic.com/s/notoserifkr/v31/3JnoSDn90Gmq2mr3blnHaTZXbOtLJDvui3JOncgBf852.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: Pretendard;
+  font-style: normal;
+  font-weight: 300;
+  font-display: fallback;
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/packages/pretendard/dist/web/static/woff2/Pretendard-Light.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: Pretendard;
+  font-style: normal;
+  font-weight: 400;
+  font-display: fallback;
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/packages/pretendard/dist/web/static/woff2/Pretendard-Regular.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: Pretendard;
+  font-style: normal;
+  font-weight: 500;
+  font-display: fallback;
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/packages/pretendard/dist/web/static/woff2/Pretendard-Medium.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: Pretendard;
+  font-style: normal;
+  font-weight: 700;
+  font-display: fallback;
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/packages/pretendard/dist/web/static/woff2/Pretendard-Bold.woff2")
+    format("woff2");
+}
+
 :root {
   --wp--preset--color--primary: #000000;
   --wp--preset--color--secondary: #454545;
@@ -143,6 +251,9 @@
   --wp--style--global--wide-size: 700px;
   --wp--style--root--padding-left: var(--wp--preset--spacing--50);
   --wp--style--root--padding-right: var(--wp--preset--spacing--50);
+  --yooreru-font-noto-serif-kr: "Noto Serif KR", "AppleMyungjo", Batang, serif;
+  --yooreru-font-noto-sans-kr: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --yooreru-font-pretendard: Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 
 * {
@@ -255,6 +366,18 @@ button {
 
 .has-text-align-right {
   text-align: right;
+}
+
+.has-noto-serif-kr-font-family {
+  font-family: var(--yooreru-font-noto-serif-kr);
+}
+
+.has-noto-sans-kr-font-family {
+  font-family: var(--yooreru-font-noto-sans-kr);
+}
+
+.has-pretendard-font-family {
+  font-family: var(--yooreru-font-pretendard);
 }
 
 .has-global-padding {
@@ -1465,6 +1588,31 @@ button {
   background: #ffffff;
   color: #333333;
   padding: 0;
+}
+
+.admin-font-control {
+  display: inline-flex;
+  height: 44px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d9d9d2;
+  background: #ffffff;
+  padding: 0 10px;
+  color: #333333;
+}
+
+.editor-form .admin-font-control select {
+  height: 100%;
+  min-width: 180px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  outline: none;
+}
+
+.admin-font-control:focus-within {
+  border-color: #00d084;
+  color: #008a20;
 }
 
 .admin-editor-toolbar button:hover,

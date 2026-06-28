@@ -1,5 +1,10 @@
 # 설계 결정
 
+## 2026-06-28: 어드민 본문 글꼴 선택은 저장 HTML의 font-family class로 보존
+- 근거 커밋: `Add admin post font picker`
+- 이유: 게시글 본문은 이미 `Post.contentHtml`로 저장되고 공개 페이지에서 WordPress 호환 class를 전역 CSS로 렌더링한다. 글꼴 선택을 별도 DB 컬럼으로 분리하면 블록/부분 선택 글꼴을 표현하기 어렵고 기존 WordPress식 HTML 구조와도 어긋난다.
+- 제약: 어드민 에디터는 선택 영역 또는 현재 블록에 `has-*-font-family` class를 적용한다. 공개 렌더링은 전역 CSS의 font stack을 따른다. 바탕 계열은 OS 기본 `Batang` 대신 웹폰트로 제공되는 Noto Serif KR을 사용하고, 고딕 계열은 Noto Sans KR/Pretendard를 사용한다.
+
 ## 2026-05-11: slug는 디코딩과 Unicode NFC 정규화를 거쳐 비교
 - 근거 커밋: `85be336` Fix slug matching and normalize slugs
 - 이유: WordPress export와 브라우저 URL에서 한글 slug가 URL 인코딩, 이중 인코딩, Unicode 정규화 차이로 달라질 수 있다.

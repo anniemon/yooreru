@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { ImagePlus, Save } from "lucide-react";
+import { ALargeSmall, ImagePlus, Save } from "lucide-react";
 import { savePost, uploadEditorImage } from "@/app/admin/actions";
 import { formatDateTimeLocal } from "@/lib/time-zone";
 import type { AdminCategory } from "@/services/admin-categories";
@@ -19,6 +19,18 @@ type PostFormValue = {
   category?: { id?: number; name: string } | null;
   tags?: { name: string }[];
 };
+
+const FONT_OPTIONS = [
+  { label: "기본", className: "" },
+  { label: "Noto Serif KR", className: "has-noto-serif-kr-font-family" },
+  { label: "Noto Sans KR", className: "has-noto-sans-kr-font-family" },
+  { label: "Pretendard", className: "has-pretendard-font-family" },
+] as const;
+
+type EditorFontClass = (typeof FONT_OPTIONS)[number]["className"];
+
+const EDITOR_FONT_CLASSES = FONT_OPTIONS.map((option) => option.className).filter(Boolean);
+const EDITOR_FONT_SELECTOR = EDITOR_FONT_CLASSES.map((className) => `.${className}`).join(",");
 
 function categoryLabel(category: AdminCategory, categories: AdminCategory[]) {
   const parent = category.parentId ? categories.find((item) => item.id === category.parentId) : null;
@@ -109,6 +121,94 @@ export function AdminPostForm({
     }
   }
 
+  function topLevelEditorNode(node: Node): ChildNode | null {
+    const editor = editorRef.current;
+    if (!editor) {
+      return null;
+    }
+
+    let current: Node | null = node.nodeType === Node.TEXT_NODE ? node.parentNode : node;
+    while (current?.parentNode && current.parentNode !== editor) {
+      current = current.parentNode;
+    }
+
+    return current?.parentNode === editor ? (current as ChildNode) : null;
+  }
+
+  function removeFontClasses(element: HTMLElement) {
+    element.classList.remove(...EDITOR_FONT_CLASSES);
+    if (!element.getAttribute("class")) {
+      element.removeAttribute("class");
+    }
+  }
+
+  function setFontClass(element: HTMLElement, fontClass: EditorFontClass) {
+    removeFontClasses(element);
+    if (fontClass) {
+      element.classList.add(fontClass);
+    }
+  }
+
+  function clearNestedFontClasses(element: HTMLElement) {
+    removeFontClasses(element);
+    element.querySelectorAll<HTMLElement>(EDITOR_FONT_SELECTOR).forEach(removeFontClasses);
+  }
+
+  function selectedTopLevelNodes(range: Range) {
+    const editor = editorRef.current;
+    if (!editor) {
+      return [];
+    }
+
+    return Array.from(editor.childNodes).filter(
+      (node): node is HTMLElement => node instanceof HTMLElement && range.intersectsNode(node),
+    );
+  }
+
+  function applyFontClass(fontClass: EditorFontClass) {
+    restoreSelection();
+
+    const editor = editorRef.current;
+    const selection = window.getSelection();
+    if (!editor || !selection?.rangeCount) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (!editor.contains(range.commonAncestorContainer)) {
+      return;
+    }
+
+    const topLevelNodes = selectedTopLevelNodes(range);
+    const currentNode = topLevelEditorNode(range.startContainer);
+
+    if (selection.isCollapsed || !fontClass || topLevelNodes.length !== 1) {
+      const targets = topLevelNodes.length ? topLevelNodes : currentNode instanceof HTMLElement ? [currentNode] : [];
+      targets.forEach((node) => {
+        if (fontClass) {
+          setFontClass(node, fontClass);
+        } else {
+          clearNestedFontClasses(node);
+        }
+      });
+      syncEditor();
+      saveSelection();
+      return;
+    }
+
+    const span = document.createElement("span");
+    setFontClass(span, fontClass);
+    span.append(range.extractContents());
+    range.insertNode(span);
+
+    const nextRange = document.createRange();
+    nextRange.selectNodeContents(span);
+    selection.removeAllRanges();
+    selection.addRange(nextRange);
+    savedRangeRef.current = nextRange.cloneRange();
+    syncEditor();
+  }
+
   function insertImage(url: string, alt: string) {
     restoreSelection();
     const editor = editorRef.current;
@@ -125,19 +225,6 @@ export function AdminPostForm({
     const rangeIsInsideEditor =
       selection?.rangeCount &&
       editor?.contains(selection.getRangeAt(0).commonAncestorContainer);
-
-    function topLevelEditorNode(node: Node): ChildNode | null {
-      if (!editor) {
-        return null;
-      }
-
-      let current: Node | null = node.nodeType === Node.TEXT_NODE ? node.parentNode : node;
-      while (current?.parentNode && current.parentNode !== editor) {
-        current = current.parentNode;
-      }
-
-      return current?.parentNode === editor ? (current as ChildNode) : null;
-    }
 
     function isEmptyParagraph(node: Node | null): node is HTMLParagraphElement {
       return (
@@ -228,7 +315,24 @@ export function AdminPostForm({
       </label>
 
       <div className="admin-editor-shell">
-        <div className="admin-editor-toolbar" aria-label="본문 이미지 삽입">
+        <div className="admin-editor-toolbar" aria-label="본문 도구">
+          <div className="admin-font-control">
+            <ALargeSmall size={20} aria-hidden="true" />
+            <select
+              aria-label="본문 글꼴"
+              defaultValue=""
+              onMouseDown={saveSelection}
+              onChange={(event) => {
+                applyFontClass(event.currentTarget.value as EditorFontClass);
+              }}
+            >
+              {FONT_OPTIONS.map((option) => (
+                <option key={option.label} value={option.className}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             type="button"
             title="이미지 삽입"

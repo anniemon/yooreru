@@ -1,9 +1,9 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 커밋: Track pagination follow-ups
-- 테스트 상태: `git diff --check` 통과
-- 린트/빌드: 미실행 (문서/CI 설정만 변경)
+- 최신 커밋: Add admin post font picker
+- 테스트 상태: `npm run lint`, `npm run build` 통과
+- 린트/빌드: 통과
 
 ## 완료된 항목
 - [x] ARCHITECTURE.md에 현재 코드베이스 아키텍처 정리
@@ -29,16 +29,17 @@
 - [x] 런타임 DB 접근을 서비스 레이어 경유로 정리
 - [x] PR #3 리뷰 코멘트 중 유효한 항목 반영
 - [x] main branch push 시 Vercel deploy hook을 호출하는 GitHub Actions workflow 추가
+- [x] [어드민] 글 작성 시 font 바꿀 수 있도록 지원: Noto Serif KR, Noto Sans KR, Pretendard
 
 ## 진행 중
-- 커밋 승인 대기: Vercel deploy hook workflow 추가
+- 커밋 승인 대기: 어드민 글 작성 폰트 선택 지원
 
 ## 알려진 이슈
 - 로딩 인디케이터 없음
 - 전반적인 응답 지연 문제
 
 ## 다음 단계
-- [어드민] 글 작성 시 font 바꿀 수 있도록 지원: 명조(을유 1945), 순바탕, 고딕(Noto Sans Kr, Pretendard)
+- [어드민] 로그인 access token 만료 시간/ 세션 늘리기
 - 새로운 댓글 달릴 시 글 저자에게 이메일 알림 발송(본인이 남긴 댓글/대댓글 제외)
 - 새로운 구독자 등록 시 어드민 이메일로 이메일 전송하기
 - [페이지네이션] 어드민 게시글 목록: `getAdminPostList`가 최근 50개만 고정 조회하고 pagination UI/API가 없음
