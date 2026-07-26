@@ -1101,46 +1101,15 @@ button {
   padding-left: 1rem;
 }
 
-.wp-block-yooreru-link-preview {
-  margin: 1rem 0;
+.yooreru-editor-link {
+  color: #005fcc;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.14em;
 }
 
-.wp-block-yooreru-link-preview > a {
-  display: grid;
-  gap: 0.28rem;
-  border: 1px solid #d9d9d2;
-  background: #ffffff;
-  padding: 1rem 1.1rem;
-}
-
-.wp-block-yooreru-link-preview > a:hover {
-  border-color: #00d084;
-}
-
-.yooreru-link-preview-type,
-.yooreru-link-preview-url {
-  color: #6f6f68;
-  font-family: "DM Mono", monospace;
-  font-size: 0.72rem;
-  line-height: 1.4;
-}
-
-.yooreru-link-preview-type {
-  color: #008a20;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-}
-
-.yooreru-link-preview-title {
-  color: #111111;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.yooreru-link-preview-url {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.yooreru-editor-link:hover {
+  color: #004a9e;
 }
 
 .entry-content.wp-block-post-content img {
@@ -1810,10 +1779,6 @@ button {
 }
 
 .admin-rich-editor figure {
-  margin: 0 0 1rem;
-}
-
-.admin-rich-editor .wp-block-yooreru-link-preview {
   margin: 0 0 1rem;
 }
 

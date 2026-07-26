@@ -383,48 +383,26 @@ export function AdminPostForm({
     return url.protocol === "http:" || url.protocol === "https:" ? url : null;
   }
 
-  function insertLinkPreview(url: URL, label: string) {
+  function insertLink(url: URL, label: string) {
     restoreSelection();
 
     const editor = editorRef.current;
-    const preview = document.createElement("figure");
     const anchor = document.createElement("a");
-    const type = document.createElement("span");
-    const title = document.createElement("strong");
-    const hostname = document.createElement("span");
-    const paragraph = document.createElement("p");
 
-    preview.className = "wp-block-yooreru-link-preview";
-    preview.contentEditable = "false";
+    anchor.className = "yooreru-editor-link";
     anchor.href = url.href;
     anchor.target = "_blank";
     anchor.rel = "noreferrer noopener";
-    type.className = "yooreru-link-preview-type";
-    type.textContent = "LINK";
-    title.className = "yooreru-link-preview-title";
-    title.textContent = label || url.hostname.replace(/^www\./, "");
-    hostname.className = "yooreru-link-preview-url";
-    hostname.textContent = url.href;
-    paragraph.innerHTML = "<br>";
-    anchor.append(type, title, hostname);
-    preview.append(anchor);
+    anchor.textContent = label || url.href;
 
     const selection = window.getSelection();
     const rangeIsInsideEditor =
       selection?.rangeCount &&
       editor?.contains(selection.getRangeAt(0).commonAncestorContainer);
 
-    function isEmptyParagraph(node: Node | null): node is HTMLParagraphElement {
-      return (
-        node instanceof HTMLParagraphElement &&
-        !node.textContent?.trim() &&
-        Array.from(node.childNodes).every((child) => child.nodeName === "BR")
-      );
-    }
-
-    function moveCaretToParagraph() {
+    function moveCaretAfterLink() {
       const nextRange = document.createRange();
-      nextRange.setStart(paragraph, 0);
+      nextRange.setStartAfter(anchor);
       nextRange.collapse(true);
       selection?.removeAllRanges();
       selection?.addRange(nextRange);
@@ -433,24 +411,20 @@ export function AdminPostForm({
 
     if (rangeIsInsideEditor) {
       const range = selection.getRangeAt(0);
-      const currentBlock = topLevelEditorNode(range.startContainer);
       range.deleteContents();
-      if (isEmptyParagraph(currentBlock)) {
-        currentBlock.replaceWith(preview, paragraph);
-      } else if (currentBlock) {
-        currentBlock.after(preview, paragraph);
-      } else {
-        editor?.append(preview, paragraph);
-      }
-      moveCaretToParagraph();
+      range.insertNode(anchor);
+      moveCaretAfterLink();
     } else {
-      editor?.append(preview, paragraph);
+      const paragraph = document.createElement("p");
+      paragraph.append(anchor);
+      editor?.append(paragraph);
+      moveCaretAfterLink();
     }
 
     syncEditor();
   }
 
-  function submitLinkPreview() {
+  function submitLink() {
     let url: URL | null = null;
     try {
       url = parseLinkUrl(linkUrl);
@@ -463,7 +437,7 @@ export function AdminPostForm({
       return;
     }
 
-    insertLinkPreview(url, linkLabel.trim());
+    insertLink(url, linkLabel.trim());
     setLinkEditorOpen(false);
     setLinkUrl("");
     setLinkLabel("");
@@ -640,7 +614,7 @@ export function AdminPostForm({
           </button>
           <button
             type="button"
-            title="링크 미리보기 삽입"
+            title="링크 삽입"
             disabled={editorMode === "html"}
             onMouseDown={(event) => {
               event.preventDefault();
@@ -649,7 +623,7 @@ export function AdminPostForm({
             onClick={openLinkEditor}
           >
             <Link2 size={22} />
-            <span className="screen-reader-text">링크 미리보기 삽입</span>
+            <span className="screen-reader-text">링크 삽입</span>
           </button>
           <button
             type="button"
@@ -671,7 +645,7 @@ export function AdminPostForm({
           />
         </div>
         {linkEditorOpen ? (
-          <div className="admin-link-editor" aria-label="링크 미리보기 삽입">
+          <div className="admin-link-editor" aria-label="링크 삽입">
             <label>
               URL
               <input
@@ -687,7 +661,7 @@ export function AdminPostForm({
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    submitLinkPreview();
+                    submitLink();
                   }
                 }}
               />
@@ -702,13 +676,13 @@ export function AdminPostForm({
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    submitLinkPreview();
+                    submitLink();
                   }
                 }}
               />
             </label>
             <div className="admin-link-editor-actions">
-              <button type="button" onClick={submitLinkPreview}>
+              <button type="button" onClick={submitLink}>
                 삽입
               </button>
               <button
