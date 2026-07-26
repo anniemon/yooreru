@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getSessionUser } from "@/lib/auth";
 import { SITE } from "@/lib/constants";
 import { CONTENT_CACHE_TAG, postHref } from "@/services/content";
 import { createPostComment } from "@/services/comments";
@@ -57,12 +58,14 @@ export async function createComment(postId: number, parentId: number | null, for
     return;
   }
 
+  const sessionUser = await getSessionUser();
   const post = await createPostComment({
     postId,
     parentId,
     authorName: parsed.data.authorName,
     authorEmail: parsed.data.authorEmail,
     content: parsed.data.content,
+    actorId: sessionUser?.id,
   });
 
   const href = postHref({
