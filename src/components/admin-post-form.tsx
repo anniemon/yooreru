@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ALargeSmall, ImagePlus, Save } from "lucide-react";
+import { ALargeSmall, CodeXml, ImagePlus, Save } from "lucide-react";
 import { autosavePost, savePost, uploadEditorImage } from "@/app/admin/actions";
 import { formatDateTimeLocal } from "@/lib/time-zone";
 import type { AdminCategory } from "@/services/admin-categories";
@@ -41,10 +41,19 @@ const FONT_OPTIONS = [
   { label: "Pretendard", className: "has-pretendard-font-family" },
 ] as const;
 
+const FONT_SIZE_OPTIONS = [
+  { label: "기본", className: "" },
+  { label: "작게", className: "has-small-font-size" },
+  { label: "보통", className: "has-medium-font-size" },
+  { label: "크게", className: "has-large-font-size" },
+  { label: "매우 크게", className: "has-x-large-font-size" },
+] as const;
+
 type EditorFontClass = (typeof FONT_OPTIONS)[number]["className"];
+type EditorFontSizeClass = (typeof FONT_SIZE_OPTIONS)[number]["className"];
 
 const EDITOR_FONT_CLASSES = FONT_OPTIONS.map((option) => option.className).filter(Boolean);
-const EDITOR_FONT_SELECTOR = EDITOR_FONT_CLASSES.map((className) => `.${className}`).join(",");
+const EDITOR_FONT_SIZE_CLASSES = FONT_SIZE_OPTIONS.map((option) => option.className).filter(Boolean);
 
 function categoryLabel(category: AdminCategory, categories: AdminCategory[]) {
   const parent = category.parentId ? categories.find((item) => item.id === category.parentId) : null;
@@ -120,6 +129,8 @@ export function AdminPostForm({
   const [autosaving, setAutosaving] = useState(false);
   const [autosaveStatus, setAutosaveStatus] = useState("");
   const [autosaveError, setAutosaveError] = useState("");
+  const [editorMode, setEditorMode] = useState<"visual" | "html">("visual");
+  const [htmlSource, setHtmlSource] = useState(initialContentHtml);
   const defaultCategoryId = useMemo(
     () =>
       String(
@@ -131,10 +142,24 @@ export function AdminPostForm({
   );
 
   const syncEditor = useCallback(() => {
+    const contentHtml = editorRef.current?.innerHTML.trim() || "<p><br></p>";
     if (contentInputRef.current) {
-      contentInputRef.current.value = editorRef.current?.innerHTML.trim() || "<p><br></p>";
+      contentInputRef.current.value = contentHtml;
     }
+    return contentHtml;
   }, []);
+
+  const syncActiveEditor = useCallback(() => {
+    if (editorMode === "html") {
+      const contentHtml = htmlSource.trim() || "<p><br></p>";
+      if (contentInputRef.current) {
+        contentInputRef.current.value = contentHtml;
+      }
+      return contentHtml;
+    }
+
+    return syncEditor();
+  }, [editorMode, htmlSource, syncEditor]);
 
   function setEditorNode(node: HTMLDivElement | null) {
     editorRef.current = node;
@@ -182,23 +207,24 @@ export function AdminPostForm({
     return current?.parentNode === editor ? (current as ChildNode) : null;
   }
 
-  function removeFontClasses(element: HTMLElement) {
-    element.classList.remove(...EDITOR_FONT_CLASSES);
+  function removeEditorClasses(element: HTMLElement, classNames: string[]) {
+    element.classList.remove(...classNames);
     if (!element.getAttribute("class")) {
       element.removeAttribute("class");
     }
   }
 
-  function setFontClass(element: HTMLElement, fontClass: EditorFontClass) {
-    removeFontClasses(element);
-    if (fontClass) {
-      element.classList.add(fontClass);
+  function setEditorClass(element: HTMLElement, classNames: string[], className: string) {
+    removeEditorClasses(element, classNames);
+    if (className) {
+      element.classList.add(className);
     }
   }
 
-  function clearNestedFontClasses(element: HTMLElement) {
-    removeFontClasses(element);
-    element.querySelectorAll<HTMLElement>(EDITOR_FONT_SELECTOR).forEach(removeFontClasses);
+  function clearNestedEditorClasses(element: HTMLElement, classNames: string[]) {
+    removeEditorClasses(element, classNames);
+    const selector = classNames.map((className) => `.${className}`).join(",");
+    element.querySelectorAll<HTMLElement>(selector).forEach((node) => removeEditorClasses(node, classNames));
   }
 
   function selectedTopLevelNodes(range: Range) {
@@ -212,7 +238,7 @@ export function AdminPostForm({
     );
   }
 
-  function applyFontClass(fontClass: EditorFontClass) {
+  function applyEditorClass(className: string, classNames: string[]) {
     restoreSelection();
 
     const editor = editorRef.current;
@@ -229,13 +255,13 @@ export function AdminPostForm({
     const topLevelNodes = selectedTopLevelNodes(range);
     const currentNode = topLevelEditorNode(range.startContainer);
 
-    if (selection.isCollapsed || !fontClass || topLevelNodes.length !== 1) {
+    if (selection.isCollapsed || !className || topLevelNodes.length !== 1) {
       const targets = topLevelNodes.length ? topLevelNodes : currentNode instanceof HTMLElement ? [currentNode] : [];
       targets.forEach((node) => {
-        if (fontClass) {
-          setFontClass(node, fontClass);
+        if (className) {
+          setEditorClass(node, classNames, className);
         } else {
-          clearNestedFontClasses(node);
+          clearNestedEditorClasses(node, classNames);
         }
       });
       syncEditor();
@@ -244,7 +270,7 @@ export function AdminPostForm({
     }
 
     const span = document.createElement("span");
-    setFontClass(span, fontClass);
+    setEditorClass(span, classNames, className);
     span.append(range.extractContents());
     range.insertNode(span);
 
@@ -254,6 +280,28 @@ export function AdminPostForm({
     selection.addRange(nextRange);
     savedRangeRef.current = nextRange.cloneRange();
     syncEditor();
+  }
+
+  function applyFontClass(fontClass: EditorFontClass) {
+    applyEditorClass(fontClass, EDITOR_FONT_CLASSES);
+  }
+
+  function applyFontSizeClass(fontSizeClass: EditorFontSizeClass) {
+    applyEditorClass(fontSizeClass, EDITOR_FONT_SIZE_CLASSES);
+  }
+
+  function switchEditorMode() {
+    if (editorMode === "visual") {
+      setHtmlSource(syncEditor());
+      setEditorMode("html");
+      return;
+    }
+
+    if (editorRef.current) {
+      editorRef.current.innerHTML = htmlSource.trim() || "<p><br></p>";
+    }
+    syncEditor();
+    setEditorMode("visual");
   }
 
   function insertImage(url: string, alt: string) {
@@ -352,7 +400,7 @@ export function AdminPostForm({
       return;
     }
 
-    syncEditor();
+    syncActiveEditor();
     const formData = new FormData(formRef.current);
     if (postId) {
       formData.set("id", String(postId));
@@ -398,7 +446,7 @@ export function AdminPostForm({
       autosaveInFlightRef.current = false;
       setAutosaving(false);
     }
-  }, [autosaveAllowed, postId, syncEditor, uploadingImage]);
+  }, [autosaveAllowed, postId, syncActiveEditor, uploadingImage]);
 
   useEffect(() => {
     if (!autosaveAllowed) {
@@ -433,9 +481,11 @@ export function AdminPostForm({
             <select
               aria-label="본문 글꼴"
               defaultValue=""
+              disabled={editorMode === "html"}
               onMouseDown={saveSelection}
               onChange={(event) => {
                 applyFontClass(event.currentTarget.value as EditorFontClass);
+                event.currentTarget.value = "";
               }}
             >
               {FONT_OPTIONS.map((option) => (
@@ -445,10 +495,29 @@ export function AdminPostForm({
               ))}
             </select>
           </div>
+          <div className="admin-font-control">
+            <span aria-hidden="true">가</span>
+            <select
+              aria-label="본문 글자 크기"
+              defaultValue=""
+              disabled={editorMode === "html"}
+              onMouseDown={saveSelection}
+              onChange={(event) => {
+                applyFontSizeClass(event.currentTarget.value as EditorFontSizeClass);
+                event.currentTarget.value = "";
+              }}
+            >
+              {FONT_SIZE_OPTIONS.map((option) => (
+                <option key={option.label} value={option.className}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             type="button"
             title="이미지 삽입"
-            disabled={uploadingImage}
+            disabled={uploadingImage || editorMode === "html"}
             onMouseDown={(event) => {
               event.preventDefault();
               saveSelection();
@@ -456,6 +525,15 @@ export function AdminPostForm({
             onClick={() => imageInputRef.current?.click()}
           >
             <ImagePlus size={22} />
+          </button>
+          <button
+            type="button"
+            title={editorMode === "visual" ? "HTML 직접 편집" : "비주얼 편집으로 돌아가기"}
+            aria-pressed={editorMode === "html"}
+            onClick={switchEditorMode}
+          >
+            <CodeXml size={22} />
+            <span className="screen-reader-text">{editorMode === "visual" ? "HTML 직접 편집" : "비주얼 편집으로 돌아가기"}</span>
           </button>
           <input
             ref={imageInputRef}
@@ -476,6 +554,7 @@ export function AdminPostForm({
           ref={setEditorNode}
           className="admin-rich-editor"
           contentEditable
+          hidden={editorMode === "html"}
           suppressContentEditableWarning
           onMouseUp={saveSelection}
           onKeyUp={saveSelection}
@@ -494,6 +573,20 @@ export function AdminPostForm({
           }}
           onBlur={syncEditor}
         />
+        {editorMode === "html" ? (
+          <textarea
+            className="admin-html-editor"
+            aria-label="본문 HTML"
+            spellCheck={false}
+            value={htmlSource}
+            onChange={(event) => {
+              setHtmlSource(event.currentTarget.value);
+              if (contentInputRef.current) {
+                contentInputRef.current.value = event.currentTarget.value.trim() || "<p><br></p>";
+              }
+            }}
+          />
+        ) : null}
       </div>
 
       <div className="form-grid">
@@ -538,7 +631,7 @@ export function AdminPostForm({
           발행 시 구독자에게 이메일 발송
         </label>
       </div>
-      <button className="admin-button" type="submit" onClick={syncEditor}>
+      <button className="admin-button" type="submit" onClick={syncActiveEditor}>
         <Save size={16} />
         저장
       </button>

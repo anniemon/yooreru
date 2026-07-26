@@ -380,6 +380,22 @@ button {
   font-family: var(--yooreru-font-pretendard);
 }
 
+.has-small-font-size {
+  font-size: var(--wp--preset--font-size--small);
+}
+
+.has-medium-font-size {
+  font-size: var(--wp--preset--font-size--medium);
+}
+
+.has-large-font-size {
+  font-size: var(--wp--preset--font-size--large);
+}
+
+.has-x-large-font-size {
+  font-size: var(--wp--preset--font-size--x-large);
+}
+
 .has-global-padding {
   padding-right: var(--wp--style--root--padding-right);
   padding-left: var(--wp--style--root--padding-left);
@@ -1615,6 +1631,11 @@ button {
   color: #008a20;
 }
 
+.admin-font-control select:disabled {
+  cursor: not-allowed;
+  color: #95938b;
+}
+
 .admin-editor-toolbar button:hover,
 .admin-editor-toolbar button:focus-visible {
   border-color: #00d084;
@@ -1656,6 +1677,27 @@ button {
   font-weight: 300;
   line-height: 1.7;
   outline: none;
+}
+
+.admin-html-editor {
+  display: block;
+  width: 100%;
+  min-height: 420px;
+  resize: vertical;
+  border: 0;
+  padding: 18px;
+  background: #111111;
+  color: #e7f7ec;
+  font-family: "DM Mono", monospace;
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1.7;
+  outline: none;
+  tab-size: 2;
+}
+
+.admin-html-editor:focus {
+  box-shadow: inset 0 0 0 2px #00d084;
 }
 
 .admin-rich-editor:focus {

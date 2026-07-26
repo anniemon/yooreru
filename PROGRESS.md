@@ -1,8 +1,8 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 커밋: Fix admin canonical redirect loop
-- 테스트 상태: `npm run lint`, `npm run build`, local redirect smoke test 통과
+- 최신 커밋: Add admin HTML editor and font sizes
+- 테스트 상태: `npm run lint`, `npm run build` 통과
 - 린트/빌드: 통과
 
 ## 완료된 항목
@@ -30,6 +30,7 @@
 - [x] PR #3 리뷰 코멘트 중 유효한 항목 반영
 - [x] main branch push 시 Vercel deploy hook을 호출하는 GitHub Actions workflow 추가
 - [x] [어드민] 글 작성 시 font 바꿀 수 있도록 지원: Noto Serif KR, Noto Sans KR, Pretendard
+- [x] [어드민] 글 작성 시 HTML을 직접 보고 편집할 수 있는 모드와 글자 크기 설정 추가
 - [x] [어드민] www/admin 접근 시 canonical host로 redirect해 세션 도메인 혼선을 방지
 - [x] [어드민] 글 작성 중 10분마다 초안 자동 임시 저장
 - [x] [어드민] 운영 canonical host와 반대 방향으로 redirect되어 발생한 `ERR_TOO_MANY_REDIRECTS` 수정
