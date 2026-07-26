@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ALargeSmall, CodeXml, ImagePlus, Save } from "lucide-react";
+import { ALargeSmall, CodeXml, ImagePlus, Link2, Save } from "lucide-react";
 import { autosavePost, savePost, uploadEditorImage } from "@/app/admin/actions";
 import { formatDateTimeLocal } from "@/lib/time-zone";
 import type { AdminCategory } from "@/services/admin-categories";
@@ -111,6 +111,7 @@ export function AdminPostForm({
   const editorRef = useRef<HTMLDivElement>(null);
   const contentInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const linkUrlInputRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
   const autosaveInFlightRef = useRef(false);
   const lastAutosaveSnapshotRef = useRef("");
@@ -131,6 +132,10 @@ export function AdminPostForm({
   const [autosaveError, setAutosaveError] = useState("");
   const [editorMode, setEditorMode] = useState<"visual" | "html">("visual");
   const [htmlSource, setHtmlSource] = useState(initialContentHtml);
+  const [linkEditorOpen, setLinkEditorOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkLabel, setLinkLabel] = useState("");
+  const [linkError, setLinkError] = useState("");
   const defaultCategoryId = useMemo(
     () =>
       String(
@@ -358,6 +363,114 @@ export function AdminPostForm({
     return image;
   }
 
+  function selectedEditorText() {
+    return savedRangeRef.current?.toString().replace(/\s+/g, " ").trim() ?? "";
+  }
+
+  function openLinkEditor() {
+    setLinkUrl("");
+    setLinkLabel(selectedEditorText());
+    setLinkError("");
+    setLinkEditorOpen(true);
+  }
+
+  function parseLinkUrl(value: string) {
+    const input = value.trim();
+    if (!input) {
+      return null;
+    }
+
+    const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(input) ? input : `https://${input}`);
+    return url.protocol === "http:" || url.protocol === "https:" ? url : null;
+  }
+
+  function insertLinkPreview(url: URL, label: string) {
+    restoreSelection();
+
+    const editor = editorRef.current;
+    const preview = document.createElement("figure");
+    const anchor = document.createElement("a");
+    const type = document.createElement("span");
+    const title = document.createElement("strong");
+    const hostname = document.createElement("span");
+    const paragraph = document.createElement("p");
+
+    preview.className = "wp-block-yooreru-link-preview";
+    preview.contentEditable = "false";
+    anchor.href = url.href;
+    anchor.target = "_blank";
+    anchor.rel = "noreferrer noopener";
+    type.className = "yooreru-link-preview-type";
+    type.textContent = "LINK";
+    title.className = "yooreru-link-preview-title";
+    title.textContent = label || url.hostname.replace(/^www\./, "");
+    hostname.className = "yooreru-link-preview-url";
+    hostname.textContent = url.href;
+    paragraph.innerHTML = "<br>";
+    anchor.append(type, title, hostname);
+    preview.append(anchor);
+
+    const selection = window.getSelection();
+    const rangeIsInsideEditor =
+      selection?.rangeCount &&
+      editor?.contains(selection.getRangeAt(0).commonAncestorContainer);
+
+    function isEmptyParagraph(node: Node | null): node is HTMLParagraphElement {
+      return (
+        node instanceof HTMLParagraphElement &&
+        !node.textContent?.trim() &&
+        Array.from(node.childNodes).every((child) => child.nodeName === "BR")
+      );
+    }
+
+    function moveCaretToParagraph() {
+      const nextRange = document.createRange();
+      nextRange.setStart(paragraph, 0);
+      nextRange.collapse(true);
+      selection?.removeAllRanges();
+      selection?.addRange(nextRange);
+      savedRangeRef.current = nextRange.cloneRange();
+    }
+
+    if (rangeIsInsideEditor) {
+      const range = selection.getRangeAt(0);
+      const currentBlock = topLevelEditorNode(range.startContainer);
+      range.deleteContents();
+      if (isEmptyParagraph(currentBlock)) {
+        currentBlock.replaceWith(preview, paragraph);
+      } else if (currentBlock) {
+        currentBlock.after(preview, paragraph);
+      } else {
+        editor?.append(preview, paragraph);
+      }
+      moveCaretToParagraph();
+    } else {
+      editor?.append(preview, paragraph);
+    }
+
+    syncEditor();
+  }
+
+  function submitLinkPreview() {
+    let url: URL | null = null;
+    try {
+      url = parseLinkUrl(linkUrl);
+    } catch {
+      // Invalid URLs are handled below.
+    }
+
+    if (!url) {
+      setLinkError("http:// 또는 https:// 주소를 입력해 주세요.");
+      return;
+    }
+
+    insertLinkPreview(url, linkLabel.trim());
+    setLinkEditorOpen(false);
+    setLinkUrl("");
+    setLinkLabel("");
+    setLinkError("");
+  }
+
   async function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
@@ -460,6 +573,12 @@ export function AdminPostForm({
     return () => window.clearInterval(timer);
   }, [autosaveAllowed, runAutosave]);
 
+  useEffect(() => {
+    if (linkEditorOpen) {
+      linkUrlInputRef.current?.focus();
+    }
+  }, [linkEditorOpen]);
+
   return (
     <form ref={formRef} className="admin-panel editor-form" action={savePost}>
       {postId ? <input type="hidden" name="id" value={postId} /> : null}
@@ -528,6 +647,19 @@ export function AdminPostForm({
           </button>
           <button
             type="button"
+            title="링크 미리보기 삽입"
+            disabled={editorMode === "html"}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              saveSelection();
+            }}
+            onClick={openLinkEditor}
+          >
+            <Link2 size={22} />
+            <span className="screen-reader-text">링크 미리보기 삽입</span>
+          </button>
+          <button
+            type="button"
             title={editorMode === "visual" ? "HTML 직접 편집" : "비주얼 편집으로 돌아가기"}
             aria-pressed={editorMode === "html"}
             onClick={switchEditorMode}
@@ -545,6 +677,61 @@ export function AdminPostForm({
             onChange={handleImageChange}
           />
         </div>
+        {linkEditorOpen ? (
+          <div className="admin-link-editor" aria-label="링크 미리보기 삽입">
+            <label>
+              URL
+              <input
+                ref={linkUrlInputRef}
+                type="text"
+                inputMode="url"
+                placeholder="https://example.com"
+                value={linkUrl}
+                onChange={(event) => {
+                  setLinkUrl(event.currentTarget.value);
+                  setLinkError("");
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    submitLinkPreview();
+                  }
+                }}
+              />
+            </label>
+            <label>
+              표시 문구
+              <input
+                type="text"
+                placeholder="비워두면 사이트 주소를 표시합니다"
+                value={linkLabel}
+                onChange={(event) => setLinkLabel(event.currentTarget.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    submitLinkPreview();
+                  }
+                }}
+              />
+            </label>
+            <div className="admin-link-editor-actions">
+              <button type="button" onClick={submitLinkPreview}>
+                삽입
+              </button>
+              <button
+                type="button"
+                className="admin-link-editor-cancel"
+                onClick={() => {
+                  setLinkEditorOpen(false);
+                  setLinkError("");
+                }}
+              >
+                취소
+              </button>
+            </div>
+            {linkError ? <p className="admin-editor-error">{linkError}</p> : null}
+          </div>
+        ) : null}
         {uploadError ? <p className="admin-editor-error">{uploadError}</p> : null}
         {uploadingImage ? <p className="admin-editor-status">이미지를 업로드하고 있습니다.</p> : null}
         {autosaveError ? <p className="admin-editor-error">{autosaveError}</p> : null}

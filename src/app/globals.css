@@ -1101,6 +1101,48 @@ button {
   padding-left: 1rem;
 }
 
+.wp-block-yooreru-link-preview {
+  margin: 1rem 0;
+}
+
+.wp-block-yooreru-link-preview > a {
+  display: grid;
+  gap: 0.28rem;
+  border: 1px solid #d9d9d2;
+  background: #ffffff;
+  padding: 1rem 1.1rem;
+}
+
+.wp-block-yooreru-link-preview > a:hover {
+  border-color: #00d084;
+}
+
+.yooreru-link-preview-type,
+.yooreru-link-preview-url {
+  color: #6f6f68;
+  font-family: "DM Mono", monospace;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.yooreru-link-preview-type {
+  color: #008a20;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.yooreru-link-preview-title {
+  color: #111111;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.yooreru-link-preview-url {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .entry-content.wp-block-post-content img {
   max-width: 100%;
   height: auto;
@@ -1652,6 +1694,51 @@ button {
   display: none;
 }
 
+.admin-link-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  border-bottom: 1px solid #d9d9d2;
+  background: #f6f7f4;
+  padding: 10px;
+}
+
+.admin-link-editor label {
+  display: grid;
+  gap: 5px;
+  color: #333333;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.editor-form .admin-link-editor input {
+  min-width: 0;
+}
+
+.admin-link-editor-actions {
+  display: flex;
+  align-items: end;
+  gap: 6px;
+}
+
+.admin-link-editor-actions button {
+  height: 42px;
+  white-space: nowrap;
+}
+
+.editor-form .admin-link-editor-cancel {
+  border: 1px solid #d9d9d2;
+  background: #ffffff;
+  color: #333333;
+}
+
+.admin-link-editor .admin-editor-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
 .admin-editor-error,
 .admin-editor-status {
   margin: 0;
@@ -1723,6 +1810,10 @@ button {
 }
 
 .admin-rich-editor figure {
+  margin: 0 0 1rem;
+}
+
+.admin-rich-editor .wp-block-yooreru-link-preview {
   margin: 0 0 1rem;
 }
 

@@ -1,7 +1,7 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 커밋: Send comment author email notifications
+- 최신 커밋: Add visual editor link previews
 - 테스트 상태: `npm run lint`, `npm run build` 통과
 - 린트/빌드: 통과
 
@@ -31,6 +31,7 @@
 - [x] main branch push 시 Vercel deploy hook을 호출하는 GitHub Actions workflow 추가
 - [x] [어드민] 글 작성 시 font 바꿀 수 있도록 지원: Noto Serif KR, Noto Sans KR, Pretendard
 - [x] [어드민] 글 작성 시 HTML을 직접 보고 편집할 수 있는 모드와 글자 크기 설정 추가
+- [x] [어드민] 비주얼 모드에서 링크 미리보기 삽입 지원
 - [x] 새 댓글 작성 시 글 작성자에게 이메일 알림 발송(작성자 본인의 댓글/대댓글 제외)
 - [x] [어드민] www/admin 접근 시 canonical host로 redirect해 세션 도메인 혼선을 방지
 - [x] [어드민] 글 작성 중 10분마다 초안 자동 임시 저장
