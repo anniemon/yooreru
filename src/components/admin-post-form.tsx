@@ -111,7 +111,6 @@ export function AdminPostForm({
   const editorRef = useRef<HTMLDivElement>(null);
   const contentInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const linkUrlInputRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
   const autosaveInFlightRef = useRef(false);
   const lastAutosaveSnapshotRef = useRef("");
@@ -573,12 +572,6 @@ export function AdminPostForm({
     return () => window.clearInterval(timer);
   }, [autosaveAllowed, runAutosave]);
 
-  useEffect(() => {
-    if (linkEditorOpen) {
-      linkUrlInputRef.current?.focus();
-    }
-  }, [linkEditorOpen]);
-
   return (
     <form ref={formRef} className="admin-panel editor-form" action={savePost}>
       {postId ? <input type="hidden" name="id" value={postId} /> : null}
@@ -682,7 +675,7 @@ export function AdminPostForm({
             <label>
               URL
               <input
-                ref={linkUrlInputRef}
+                autoFocus
                 type="text"
                 inputMode="url"
                 placeholder="https://example.com"

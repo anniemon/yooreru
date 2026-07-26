@@ -1,7 +1,7 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 커밋: Add visual editor link previews
+- 최신 커밋: Use email-only comment self checks
 - 테스트 상태: `npm run lint`, `npm run build` 통과
 - 린트/빌드: 통과
 

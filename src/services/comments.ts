@@ -30,23 +30,13 @@ function escapeHtml(value: string) {
 function isPostAuthorComment({
   actorId,
   authorEmail,
-  authorName,
   postAuthor,
 }: {
   actorId?: number | null;
   authorEmail: string | null;
-  authorName: string;
-  postAuthor: { id: number; email: string; name: string };
+  postAuthor: { id: number; email: string };
 }) {
-  if (actorId === postAuthor.id) {
-    return true;
-  }
-
-  if (authorEmail?.toLocaleLowerCase() === postAuthor.email.toLocaleLowerCase()) {
-    return true;
-  }
-
-  return !authorEmail && authorName.trim().normalize("NFC") === postAuthor.name.trim().normalize("NFC");
+  return actorId === postAuthor.id || authorEmail?.toLocaleLowerCase() === postAuthor.email.toLocaleLowerCase();
 }
 
 async function notifyPostAuthorOfComment({
@@ -59,7 +49,7 @@ async function notifyPostAuthorOfComment({
     title: string;
     slug: string;
     publishedAt: Date | null;
-    author: { id: number; email: string; name: string } | null;
+    author: { id: number; email: string } | null;
   };
   comment: {
     id: number;
@@ -102,7 +92,7 @@ export async function createPostComment(input: CreateCommentInput) {
   const db = requirePrisma();
   const post = await db.post.findUnique({
     where: { id: input.postId },
-    include: { author: { select: { id: true, email: true, name: true } } },
+    include: { author: { select: { id: true, email: true } } },
   });
 
   if (!post || !post.allowComments) {
