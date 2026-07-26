@@ -134,7 +134,7 @@ export function Comments({ post }: { post: BlogPost }) {
   const action = createComment.bind(null, post.id, null);
 
   return (
-    <div className="wp-block-group alignwide has-global-padding is-layout-constrained post-comments-shell">
+    <div id="comments" className="wp-block-group alignwide has-global-padding is-layout-constrained post-comments-shell">
       <div className="wp-block-columns alignwide is-layout-flex">
         <div className="wp-block-column is-layout-flow post-comments-column">
           <div className="wp-block-template-part">

@@ -78,7 +78,7 @@ DB 제약 원칙은 [prisma/CONSTRAINTS.md](prisma/CONSTRAINTS.md)를 따른다.
 
 DB 접근은 런타임 코드에서 `src/services`로 모은다. Server Action과 page는 입력 검증, 권한 확인, 캐시 무효화, redirect처럼 Next.js 경계에 가까운 일만 담당한다.
 
-- `comments.ts`: 댓글 생성과 게시글 댓글 허용 여부 확인
+- `comments.ts`: 댓글 생성, 게시글 댓글 허용 여부 확인, 새 댓글의 글 작성자 이메일 알림
 - `subscribers.ts`: 구독자 upsert와 구독 확인 메일
 - `contact.ts`: 문의 메시지 저장과 관리자 알림
 - `content.ts`: 공개 게시글/카테고리/태그 읽기 모델과 캐시
@@ -104,7 +104,7 @@ DB 접근은 런타임 코드에서 `src/services`로 모은다. Server Action�
 
 - `RESEND_API_KEY`가 있으면 Resend로 전송한다.
 - 키가 없으면 `[mail:dry-run]` 로그를 남기고 성공 형태의 응답을 반환한다.
-- 구독 등록 확인, 글 발행 알림, 관리자 초대, 문의 알림에 사용한다.
+- 구독 등록 확인, 글 발행 알림, 새 댓글 알림, 관리자 초대, 문의 알림에 사용한다.
 
 발행 알림은 `EmailDelivery`에 `SENT` 또는 `FAILED` 결과를 저장한다.
 
