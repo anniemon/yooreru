@@ -288,7 +288,28 @@ export function AdminPostForm({
   }
 
   function applyFontClass(fontClass: EditorFontClass) {
-    applyEditorClass(fontClass, EDITOR_FONT_CLASSES);
+    const editor = editorRef.current;
+    if (!editor) {
+      return;
+    }
+
+    clearNestedEditorClasses(editor, EDITOR_FONT_CLASSES);
+    editor.querySelectorAll<HTMLElement>("*").forEach((node) => {
+      node.style.removeProperty("font-family");
+      node.removeAttribute("face");
+    });
+    // Bare text can come from HTML mode or pasted content.
+    Array.from(editor.childNodes).forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+        const span = document.createElement("span");
+        node.replaceWith(span);
+        span.append(node);
+      }
+    });
+    Array.from(editor.children).forEach((node) => {
+      setEditorClass(node as HTMLElement, EDITOR_FONT_CLASSES, fontClass);
+    });
+    syncEditor();
   }
 
   function applyFontSizeClass(fontSizeClass: EditorFontSizeClass) {
@@ -590,10 +611,8 @@ export function AdminPostForm({
               aria-label="본문 글꼴"
               defaultValue=""
               disabled={editorMode === "html"}
-              onMouseDown={saveSelection}
               onChange={(event) => {
                 applyFontClass(event.currentTarget.value as EditorFontClass);
-                event.currentTarget.value = "";
               }}
             >
               {FONT_OPTIONS.map((option) => (
