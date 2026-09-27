@@ -112,7 +112,7 @@ export function AdminPostForm({
   const contentInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
-  const autosaveInFlightRef = useRef(false);
+  const saveInFlightRef = useRef(false);
   const lastAutosaveSnapshotRef = useRef("");
   const isComposingRef = useRef(false);
   const initializedContentRef = useRef(false);
@@ -127,6 +127,7 @@ export function AdminPostForm({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [autosaving, setAutosaving] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [autosaveStatus, setAutosaveStatus] = useState("");
   const [autosaveError, setAutosaveError] = useState("");
   const [editorMode, setEditorMode] = useState<"visual" | "html">("visual");
@@ -482,7 +483,7 @@ export function AdminPostForm({
   }
 
   const runAutosave = useCallback(async () => {
-    if (!autosaveAllowed || uploadingImage || autosaveInFlightRef.current || !formRef.current) {
+    if (!autosaveAllowed || uploadingImage || saveInFlightRef.current || !formRef.current) {
       return;
     }
 
@@ -507,7 +508,7 @@ export function AdminPostForm({
       return;
     }
 
-    autosaveInFlightRef.current = true;
+    saveInFlightRef.current = true;
     setAutosaving(true);
     setAutosaveError("");
 
@@ -529,7 +530,7 @@ export function AdminPostForm({
     } catch (error) {
       setAutosaveError(error instanceof Error ? error.message : "자동 임시 저장에 실패했습니다.");
     } finally {
-      autosaveInFlightRef.current = false;
+      saveInFlightRef.current = false;
       setAutosaving(false);
     }
   }, [autosaveAllowed, postId, syncActiveEditor, uploadingImage]);
@@ -547,7 +548,28 @@ export function AdminPostForm({
   }, [autosaveAllowed, runAutosave]);
 
   return (
-    <form ref={formRef} className="admin-panel editor-form" action={savePost}>
+    <form
+      ref={formRef}
+      className="admin-panel editor-form"
+      onSubmit={(event) => {
+        // Lock before React queues the action, including Enter-key submissions.
+        if (saveInFlightRef.current || uploadingImage) {
+          event.preventDefault();
+          return;
+        }
+        syncActiveEditor();
+        saveInFlightRef.current = true;
+        setSaving(true);
+      }}
+      action={async (formData) => {
+        try {
+          await savePost(formData);
+        } finally {
+          saveInFlightRef.current = false;
+          setSaving(false);
+        }
+      }}
+    >
       {postId ? <input type="hidden" name="id" value={postId} /> : null}
       <input ref={contentInputRef} type="hidden" name="contentHtml" defaultValue={initialContentHtml} />
 
@@ -785,9 +807,9 @@ export function AdminPostForm({
           발행 시 구독자에게 이메일 발송
         </label>
       </div>
-      <button className="admin-button" type="submit" onClick={syncActiveEditor}>
+      <button className="admin-button" type="submit" disabled={saving || autosaving || uploadingImage}>
         <Save size={16} />
-        저장
+        {saving ? "저장 중…" : "저장"}
       </button>
     </form>
   );

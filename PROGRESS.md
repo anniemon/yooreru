@@ -1,11 +1,12 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 커밋: Insert inline text links in visual editor
-- 테스트 상태: `npm run lint`, `npm run build` 통과
+- 최신 작업: Prevent overlapping admin post saves
+- 테스트 상태: `node scripts/check-post-save.mjs`, `npm run lint`, `npm run build` 통과
 - 린트/빌드: 통과
 
 ## 완료된 항목
+- [x] [어드민] 새 글 저장 연속 제출 및 자동/수동 저장 경합으로 인한 중복 생성 차단. 기존 코드에서 회귀 검사 실패, 수정 후 통과 확인(서버 액션은 모의 처리).
 - [x] ARCHITECTURE.md에 현재 코드베이스 아키텍처 정리
 - [x] DECISIONS.md에 커밋 날짜 기반 주요 설계 결정 정리
 - [x] Blob에 이미지 업로드(resizing 필요)
