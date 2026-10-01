@@ -1062,6 +1062,10 @@ button {
 }
 
 .entry-content.wp-block-post-content {
+  --wp--preset--font-size--small: 1.0625rem;
+  --wp--preset--font-size--medium: 1.25rem;
+  --wp--preset--font-size--large: 2rem;
+  --wp--preset--font-size--x-large: 3rem;
   max-width: none;
   min-height: 400px;
   margin: 0;
