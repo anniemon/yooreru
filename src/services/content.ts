@@ -296,7 +296,7 @@ export const getPostByDateSlug = cache(
   },
 );
 
-export const getCategories = cache(async () => {
+async function getDbCategories() {
   const db = getPrisma();
   if (!db) {
     return [];
@@ -308,7 +308,14 @@ export const getCategories = cache(async () => {
   });
 
   return categories.map(mapCategory);
+}
+
+const getCachedDbCategories = unstable_cache(getDbCategories, ["categories"], {
+  tags: [CONTENT_CACHE_TAG],
+  revalidate: 300,
 });
+
+export const getCategories = cache(getCachedDbCategories);
 
 export const getTags = cache(async () => {
   const db = getPrisma();
@@ -370,21 +377,33 @@ export async function getCategoryArchivePage(slugs: string[], page: number, page
     orderBy: [{ publishedAt: "desc" }],
     skip,
     take: pageSize + 1,
-    include: postInclude,
+    select: { id: true, title: true, slug: true, publishedAt: true },
   });
 
   return {
-    posts: posts.slice(0, pageSize).map(mapPost),
+    posts: posts.slice(0, pageSize).map(mapPostLink),
     page: currentPage,
     hasNext: posts.length > pageSize,
   };
 }
 
 export async function getPostsByTag(slug: string) {
-  const posts = await getPublishedPosts();
   const decoded = decodeURIComponent(slug);
+  const db = getPrisma();
+  if (!db) {
+    return [];
+  }
 
-  return posts.filter((post) => post.tags.some((tag) => tag.slug === decoded));
+  const posts = await db.post.findMany({
+    where: {
+      status: "PUBLISHED",
+      publishedAt: { lte: new Date() },
+      postTags: { some: { tag: { slug: decoded } } },
+    },
+    orderBy: [{ publishedAt: "desc" }],
+    select: { id: true, title: true, slug: true, publishedAt: true },
+  });
+  return posts.map(mapPostLink);
 }
 
 export async function getCategoryBySlugs(slugs: string[]) {
@@ -402,7 +421,7 @@ export async function getTagBySlug(slug: string) {
 }
 
 export async function getPostsByMonth(year: string, month: string) {
-  const posts = await getPublishedPosts();
+  const posts = await getPublishedPostLinks();
 
   return posts.filter((post) => {
     if (!post.publishedAt) {
@@ -432,29 +451,34 @@ export async function getArchiveMonths() {
   });
 }
 
-function stripHtml(html: string) {
-  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-}
-
 export async function searchPosts(query: string) {
-  const posts = await getPublishedPosts();
-  const needle = query.trim().toLowerCase();
+  const needle = query.trim();
 
   if (!needle) {
-    return posts;
+    return getPublishedPostLinks();
   }
 
-  return posts.filter((post) => {
-    const haystacks = [
-      post.title,
-      post.excerpt,
-      stripHtml(post.contentHtml),
-      post.categories.map((category) => category.name).join(" "),
-      post.tags.map((tag) => tag.name).join(" "),
-    ];
+  const db = getPrisma();
+  if (!db) {
+    return [];
+  }
 
-    return haystacks.some((value) => value.toLowerCase().includes(needle));
+  const posts = await db.post.findMany({
+    where: {
+      status: "PUBLISHED",
+      publishedAt: { lte: new Date() },
+      OR: [
+        { title: { contains: needle, mode: "insensitive" } },
+        { excerpt: { contains: needle, mode: "insensitive" } },
+        { contentText: { contains: needle, mode: "insensitive" } },
+        { category: { is: { name: { contains: needle, mode: "insensitive" } } } },
+        { postTags: { some: { tag: { name: { contains: needle, mode: "insensitive" } } } } },
+      ],
+    },
+    orderBy: [{ publishedAt: "desc" }],
+    select: { id: true, title: true, slug: true, publishedAt: true },
   });
+  return posts.map(mapPostLink);
 }
 
 async function getAdjacentPostLinks(postId: number, publishedAtIso: string) {

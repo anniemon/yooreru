@@ -18,9 +18,8 @@ export default async function EditPostPage({
     notFound();
   }
 
-  const categories = await getAdminCategories();
+  const [categories, post] = await Promise.all([getAdminCategories(), getAdminPostForEdit(postId)]);
   const timeZone = getAppTimeZone();
-  const post = await getAdminPostForEdit(postId);
 
   if (!post) {
     notFound();

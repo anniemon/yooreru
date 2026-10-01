@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { createSession, destroySession, requireAdmin } from "@/lib/auth";
 import { stripHtml } from "@/lib/slug";
@@ -143,9 +144,8 @@ export async function savePost(formData: FormData) {
     tags: data.tags,
   });
 
-  // todo: 별도 job으로 분리
   if (data.notifySubscribers === "on" && data.status === "PUBLISHED") {
-    await notifySubscribersForPost(post.id);
+    after(() => notifySubscribersForPost(post.id));
   }
 
   revalidatePath("/");

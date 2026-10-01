@@ -232,61 +232,6 @@ export function AdminPostForm({
     element.querySelectorAll<HTMLElement>(selector).forEach((node) => removeEditorClasses(node, classNames));
   }
 
-  function selectedTopLevelNodes(range: Range) {
-    const editor = editorRef.current;
-    if (!editor) {
-      return [];
-    }
-
-    return Array.from(editor.childNodes).filter(
-      (node): node is HTMLElement => node instanceof HTMLElement && range.intersectsNode(node),
-    );
-  }
-
-  function applyEditorClass(className: string, classNames: string[]) {
-    restoreSelection();
-
-    const editor = editorRef.current;
-    const selection = window.getSelection();
-    if (!editor || !selection?.rangeCount) {
-      return;
-    }
-
-    const range = selection.getRangeAt(0);
-    if (!editor.contains(range.commonAncestorContainer)) {
-      return;
-    }
-
-    const topLevelNodes = selectedTopLevelNodes(range);
-    const currentNode = topLevelEditorNode(range.startContainer);
-
-    if (selection.isCollapsed || !className || topLevelNodes.length !== 1) {
-      const targets = topLevelNodes.length ? topLevelNodes : currentNode instanceof HTMLElement ? [currentNode] : [];
-      targets.forEach((node) => {
-        if (className) {
-          setEditorClass(node, classNames, className);
-        } else {
-          clearNestedEditorClasses(node, classNames);
-        }
-      });
-      syncEditor();
-      saveSelection();
-      return;
-    }
-
-    const span = document.createElement("span");
-    setEditorClass(span, classNames, className);
-    span.append(range.extractContents());
-    range.insertNode(span);
-
-    const nextRange = document.createRange();
-    nextRange.selectNodeContents(span);
-    selection.removeAllRanges();
-    selection.addRange(nextRange);
-    savedRangeRef.current = nextRange.cloneRange();
-    syncEditor();
-  }
-
   function applyFontClass(fontClass: EditorFontClass) {
     const editor = editorRef.current;
     if (!editor) {
@@ -313,7 +258,27 @@ export function AdminPostForm({
   }
 
   function applyFontSizeClass(fontSizeClass: EditorFontSizeClass) {
-    applyEditorClass(fontSizeClass, EDITOR_FONT_SIZE_CLASSES);
+    const editor = editorRef.current;
+    if (!editor) {
+      return;
+    }
+
+    clearNestedEditorClasses(editor, EDITOR_FONT_SIZE_CLASSES);
+    editor.querySelectorAll<HTMLElement>("*").forEach((node) => {
+      node.style.removeProperty("font-size");
+      node.removeAttribute("size");
+    });
+    Array.from(editor.childNodes).forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+        const span = document.createElement("span");
+        node.replaceWith(span);
+        span.append(node);
+      }
+    });
+    Array.from(editor.children).forEach((node) => {
+      setEditorClass(node as HTMLElement, EDITOR_FONT_SIZE_CLASSES, fontSizeClass);
+    });
+    syncEditor();
   }
 
   function switchEditorMode() {
@@ -628,7 +593,6 @@ export function AdminPostForm({
               aria-label="본문 글자 크기"
               defaultValue=""
               disabled={editorMode === "html"}
-              onMouseDown={saveSelection}
               onChange={(event) => {
                 applyFontSizeClass(event.currentTarget.value as EditorFontSizeClass);
                 event.currentTarget.value = "";

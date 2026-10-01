@@ -231,7 +231,7 @@ export function ArchiveShell({
   );
 }
 
-export function ArchivePostList({ posts }: { posts: BlogPost[] }) {
+export function ArchivePostList({ posts }: { posts: BlogPostLink[] }) {
   return (
     <ul className="alignwide wp-block-post-template is-layout-flow wp-block-post-template-is-layout-flow">
       {posts.map((post) => (

@@ -32,7 +32,14 @@ export async function getAdminPostList() {
 
   return db.post.findMany({
     orderBy: [{ updatedAt: "desc" }],
-    include: { _count: { select: { comments: true } } },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      status: true,
+      publishedAt: true,
+      _count: { select: { comments: true } },
+    },
     take: 50,
   });
 }
