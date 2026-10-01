@@ -1964,6 +1964,18 @@ button {
 }
 
 @media (max-width: 782px) {
+  .post-heading-column .wp-block-post-title {
+    font-size: 1.75rem;
+  }
+
+  .post-heading-column .wp-block-post-date {
+    font-size: 1.125rem;
+  }
+
+  .wp-block-post-author-name .wp-block-post-author-name__link {
+    font-size: 1.375rem;
+  }
+
   .home-utility-row,
   .contact-columns,
   .site-footer-grid,
