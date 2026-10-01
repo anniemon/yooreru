@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";
@@ -149,7 +149,7 @@ export async function savePost(formData: FormData) {
   }
 
   revalidatePath("/");
-  revalidateTag(CONTENT_CACHE_TAG, "max");
+  updateTag(CONTENT_CACHE_TAG);
   redirect("/admin");
 }
 
@@ -197,6 +197,7 @@ export async function moderateComment(formData: FormData) {
   await moderatePostComment(id, status as CommentStatus);
 
   revalidatePath("/admin/comments");
+  updateTag(CONTENT_CACHE_TAG);
 }
 
 export async function saveCategory(formData: FormData) {

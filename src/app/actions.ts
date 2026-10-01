@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
@@ -73,7 +73,7 @@ export async function createComment(postId: number, parentId: number | null, for
     publishedAt: post.publishedAt,
   });
   revalidatePath(href);
-  revalidateTag(CONTENT_CACHE_TAG, "max");
+  updateTag(CONTENT_CACHE_TAG);
   redirect(`${href}#comments`);
 }
 

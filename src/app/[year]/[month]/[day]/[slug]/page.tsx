@@ -1,6 +1,13 @@
+import { Suspense } from "react";
 import { Comments } from "@/components/comments";
 import { PostNavigation, PostTagLinks, SiteHeader, formatWpDate } from "@/components/site";
 import { getAdjacentPosts, getPostByDateSlug } from "@/services/content";
+import type { BlogPost } from "@/lib/blog-types";
+
+async function AdjacentNavigation({ post }: { post: BlogPost }) {
+  const adjacent = await getAdjacentPosts(post);
+  return <PostNavigation previous={adjacent.previous} next={adjacent.next} />;
+}
 
 export default async function PostPage({
   params,
@@ -9,7 +16,6 @@ export default async function PostPage({
 }) {
   const { year, month, day, slug } = await params;
   const post = await getPostByDateSlug(year, month, day, slug);
-  const adjacent = await getAdjacentPosts(post);
 
   return (
     <>
@@ -37,7 +43,9 @@ export default async function PostPage({
       </div>
       <PostTagLinks post={post} />
       <div style={{ height: "150px" }} aria-hidden="true" className="wp-block-spacer"></div>
-      <PostNavigation previous={adjacent.previous} next={adjacent.next} />
+      <Suspense fallback={<PostNavigation previous={null} next={null} />}>
+        <AdjacentNavigation post={post} />
+      </Suspense>
       <Comments post={post} />
       <div className="wp-block-columns is-layout-flex">
         <div className="wp-block-column is-layout-flow">

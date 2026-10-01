@@ -12,12 +12,8 @@ export const CONTENT_CACHE_TAG = "content";
 
 const postInclude = {
   author: { select: { id: true, name: true } },
-  category: { include: { parent: true, _count: { select: { posts: true } } } },
-  postTags: {
-    include: {
-      tag: { include: { _count: { select: { postTags: true } } } },
-    },
-  },
+  category: true,
+  postTags: { include: { tag: true } },
   comments: {
     where: { status: "PUBLISHED" },
     orderBy: { createdAt: "asc" },
@@ -279,9 +275,14 @@ async function getDbPostBySlug(slug: string) {
   });
 }
 
+const getCachedDbPostBySlug = unstable_cache(getDbPostBySlug, ["post-detail"], {
+  tags: [CONTENT_CACHE_TAG],
+  revalidate: 60,
+});
+
 export const getPostByDateSlug = cache(
   async (year: string, month: string, day: string, slug: string) => {
-    const dbPost = await getDbPostBySlug(decodeURIComponent(slug).normalize("NFC"));
+    const dbPost = await getCachedDbPostBySlug(decodeURIComponent(slug).normalize("NFC"));
     if (!dbPost) {
       notFound();
     }
