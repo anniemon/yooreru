@@ -433,6 +433,18 @@ export async function getPostsByMonth(year: string, month: string) {
   });
 }
 
+export async function getPostsByDay(year: string, month: string, day: string) {
+  const posts = await getPublishedPostLinks();
+  return posts.filter((post) => {
+    if (!post.publishedAt) {
+      return false;
+    }
+
+    const date = formatDatePathParts(post.publishedAt);
+    return date.year === year && date.month === month && date.day === day;
+  });
+}
+
 export async function getArchiveMonths() {
   const posts = await getPublishedPosts();
   const counts = new Map<string, number>();

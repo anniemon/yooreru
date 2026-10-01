@@ -60,11 +60,14 @@ function buildCalendarMonth(
   }
 
   for (let day = 1; day <= lastDay; day += 1) {
-    const linkedPost = postsByDay.get(day)?.[0] ?? null;
+    const dayPosts = postsByDay.get(day) ?? [];
+    const linkedPost = dayPosts[0] ?? null;
     cells.push({
       day,
-      href: linkedPost?.href ?? null,
-      title: linkedPost?.title ?? null,
+      href: dayPosts.length > 1
+        ? `/${year}/${String(monthIndex + 1).padStart(2, "0")}/${String(day).padStart(2, "0")}/`
+        : linkedPost?.href ?? null,
+      title: dayPosts.length > 1 ? `${dayPosts.length}개의 글` : linkedPost?.title ?? null,
     });
   }
 
