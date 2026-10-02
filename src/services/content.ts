@@ -3,12 +3,37 @@ import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import type { PostGetPayload } from "@/generated/prisma/models";
+import type { ViewSource } from "@/generated/prisma/enums";
 import type { BlogCategory, BlogComment, BlogPost, BlogPostLink, BlogTag } from "@/lib/blog-types";
 import { getPrisma } from "@/lib/prisma";
 import { cleanCommentContent } from "@/lib/slug";
 import { formatDatePathParts, getZonedMonthKey } from "@/lib/time-zone";
 
 export const CONTENT_CACHE_TAG = "content";
+
+export async function recordPostView(postId: number, source: ViewSource) {
+  const db = getPrisma();
+  if (!db) return false;
+
+  const post = await db.post.findFirst({
+    where: { id: postId, status: "PUBLISHED", publishedAt: { lte: new Date() } },
+    select: { id: true },
+  });
+  if (!post) return false;
+
+  const where = { postId_source: { postId, source } };
+  try {
+    await db.postViewCount.upsert({
+      where,
+      create: { postId, source, count: 1 },
+      update: { count: { increment: 1 } },
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code !== "P2002") throw error;
+    await db.postViewCount.update({ where, data: { count: { increment: 1 } } });
+  }
+  return true;
+}
 
 const postInclude = {
   author: { select: { id: true, name: true } },

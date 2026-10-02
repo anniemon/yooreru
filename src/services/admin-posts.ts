@@ -39,6 +39,7 @@ export async function getAdminPostList() {
       status: true,
       publishedAt: true,
       _count: { select: { comments: true } },
+      viewCounts: { select: { source: true, count: true }, orderBy: { source: "asc" } },
     },
     take: 50,
   });

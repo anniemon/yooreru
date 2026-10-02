@@ -36,6 +36,14 @@ enum EmailDeliveryStatus {
   FAILED
 }
 
+enum ViewSource {
+  GOOGLE
+  INSTAGRAM
+  NAVER
+  OTHER
+  UNKNOWN
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
@@ -85,9 +93,19 @@ model Post {
   postTags   PostTag[]
   comments   Comment[]
   deliveries EmailDelivery[]
+  viewCounts PostViewCount[]
 
   @@index([status, publishedAt])
   @@index([categoryId])
+}
+
+model PostViewCount {
+  postId Int
+  source ViewSource
+  count  Int        @default(0)
+  post   Post       @relation(fields: [postId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([postId, source])
 }
 
 model Category {

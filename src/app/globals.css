@@ -1938,6 +1938,20 @@ button {
   text-transform: uppercase;
 }
 
+.admin-view-count {
+  margin-left: 8px;
+  color: #686868;
+  font-size: 0.85rem;
+}
+
+.admin-view-sources {
+  display: block;
+  margin-top: 4px;
+  color: #686868;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .code-textarea {
   font-family: "DM Mono", monospace;
 }

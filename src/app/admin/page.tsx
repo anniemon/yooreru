@@ -5,6 +5,15 @@ import { requireAdmin } from "@/lib/auth";
 import { isDatabaseConfigured } from "@/services/database";
 import { getAdminPostList } from "@/services/admin-posts";
 import { postHref } from "@/services/content";
+import type { ViewSource } from "@/generated/prisma/enums";
+
+const viewSourceNames: Record<ViewSource, string> = {
+  GOOGLE: "구글",
+  INSTAGRAM: "인스타그램",
+  NAVER: "네이버",
+  OTHER: "기타",
+  UNKNOWN: "직접/미확인",
+};
 
 export default async function AdminPage() {
   await requireAdmin();
@@ -43,6 +52,16 @@ export default async function AdminPage() {
               <tr key={post.id}>
                 <td>
                   <Link href={postHref(post)}>{post.title}</Link>
+                  <span className="admin-view-count">
+                    조회 {post.viewCounts.reduce((sum, item) => sum + item.count, 0).toLocaleString("ko-KR")}회
+                  </span>
+                  {post.viewCounts.length ? (
+                    <small className="admin-view-sources">
+                      {post.viewCounts
+                        .map(({ source, count }) => `${viewSourceNames[source]} ${count.toLocaleString("ko-KR")}`)
+                        .join(" · ")}
+                    </small>
+                  ) : null}
                 </td>
                 <td>{post.status}</td>
                 <td>{post._count.comments}</td>

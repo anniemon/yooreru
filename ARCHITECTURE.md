@@ -35,6 +35,7 @@
 - `/category/[[...slug]]/`: 카테고리 아카이브. `/category/a/b/page/2/` 형태의 페이지네이션을 catch-all slug에서 파싱한다.
 - `/tag/[slug]/`: 태그 아카이브
 - `/feed`: RSS 2.0 feed
+- `/api/post-views`: 공개 글을 연 브라우저의 조회 이벤트를 기록한다.
 - `/그네에게`: `src/proxy.ts`에서 `/geuneege`로 rewrite한다.
 - `/admin/**`: 내장 어드민
 
@@ -47,6 +48,7 @@ Next.js 16 App Router의 `params`와 `searchParams`는 Promise로 받아 `await`
 - `User`: 관리자/작성자. 게시글 작성자와 초대 생성자를 가진다.
 - `Invite`: 관리자/작성자 초대 토큰
 - `Post`: 게시글. `wordpressId`, `permalink`, `slug`, `status`, `publishedAt`, `contentHtml`, `contentText`, `authorId`, `categoryId`를 가진다.
+- `PostViewCount`: 글별 유입 경로(Google, Instagram, Naver, 기타, 직접/미확인)의 누적 조회수. 방문자 정보나 원본 URL은 저장하지 않는다.
 - `Category`: 단일 부모를 갖는 카테고리 트리. `wordpressId`와 slug를 보존한다.
 - `Tag`, `PostTag`: 태그와 게시글-태그 다대다 관계
 - `Comment`: WordPress 댓글 ID, 부모 댓글, 상태를 보존한다.
@@ -81,7 +83,7 @@ DB 접근은 런타임 코드에서 `src/services`로 모은다. Server Action�
 - `comments.ts`: 댓글 생성, 게시글 댓글 허용 여부 확인, 새 댓글의 글 작성자 이메일 알림
 - `subscribers.ts`: 구독자 upsert와 구독 확인 메일
 - `contact.ts`: 문의 메시지 저장과 관리자 알림
-- `content.ts`: 공개 게시글/카테고리/태그 읽기 모델과 캐시
+- `content.ts`: 공개 게시글/카테고리/태그 읽기 모델과 캐시, 발행된 글의 조회수 기록. 어드민 로그인 사용자는 제외한다.
 - `admin-posts.ts`, `admin-categories.ts`, `admin-invites.ts`, `admin-media.ts`: 어드민 게시글, 카테고리, 초대, 미디어 작업
 - `auth.ts`: DB 사용자 조회와 비밀번호 검증
 

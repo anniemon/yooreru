@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Comments } from "@/components/comments";
+import { PostViewTracker } from "@/components/post-view-tracker";
 import { PostNavigation, PostTagLinks, SiteHeader, formatWpDate } from "@/components/site";
 import { getAdjacentPosts, getPostByDateSlug, postHref } from "@/services/content";
 import type { BlogPost } from "@/lib/blog-types";
@@ -45,6 +46,7 @@ export default async function PostPage({
 
   return (
     <>
+      <PostViewTracker postId={post.id} />
       <SiteHeader />
       <div style={{ height: "100px" }} aria-hidden="true" className="wp-block-spacer"></div>
       <div className="wp-block-columns alignfull is-not-stacked-on-mobile is-layout-flex post-heading-band">
