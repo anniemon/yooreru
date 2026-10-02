@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: vercel-deploy-hook-main
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   trigger:
@@ -19,6 +19,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Apply production database migrations
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Missing NEON_DATABASE_URL GitHub secret."
+            exit 1
+          fi
+
+          npm run db:migrate
+
       - name: Call deploy hook
         env:
           VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}

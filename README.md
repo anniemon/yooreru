@@ -43,8 +43,8 @@ The importer handles posts/pages, category/tag terms, WordPress IDs, permalink v
 1. Create a Neon Postgres database and set `DATABASE_URL` in Vercel.
 2. Set `AUTH_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, and `APP_TIME_ZONE` (`Asia/Seoul` by default).
 3. Optional: set `RESEND_API_KEY`, `RESEND_FROM`, and `BLOB_READ_WRITE_TOKEN`.
-4. Run the production migration and seed admin once.
-5. Create a Vercel deploy hook for the production branch and save the hook URL as the `VERCEL_DEPLOY_HOOK_URL` GitHub Actions secret. Pushing `main` triggers `.github/workflows/vercel-deploy-hook.yml`.
+4. Add the production Neon connection string as the `NEON_DATABASE_URL` GitHub Actions secret. Seed admin once.
+5. Create a Vercel deploy hook for the production branch and save the hook URL as the `VERCEL_DEPLOY_HOOK_URL` GitHub Actions secret. Pushing `main` runs committed Prisma migrations before calling the deploy hook through `.github/workflows/vercel-deploy-hook.yml`.
 6. Keep the `yooreru.com` domain registration at WordPress.com, but replace WordPress.com DNS records with the Vercel-provided DNS records when ready to launch.
 
 Do not cancel or remove the WordPress.com domain registration unless the domain is transferred to another registrar first.
