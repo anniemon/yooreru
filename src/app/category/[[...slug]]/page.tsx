@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ArchivePagination, ArchivePostList, ArchiveShell, QueryEmptyState } from "@/components/site";
 import { getCategoryArchivePage, getCategoryBySlugs } from "@/services/content";
 
@@ -16,6 +17,22 @@ function parseCategoryRoute(slug: string[]) {
   return {
     categorySlugs: slug.slice(0, pageIndex),
     page: Number.isInteger(page) && page > 0 ? page : 1,
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug?: string[] }>;
+}): Promise<Metadata> {
+  const { slug = [] } = await params;
+  const { categorySlugs, page } = parseCategoryRoute(slug);
+  const category = await getCategoryBySlugs(categorySlugs);
+  const basePath = `/category/${categorySlugs.map(encodeURIComponent).join("/")}/`;
+  return {
+    title: category?.name ?? "카테고리",
+    description: category?.description || undefined,
+    alternates: { canonical: page === 1 ? basePath : `${basePath}page/${page}/` },
   };
 }
 

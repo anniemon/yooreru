@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   ArchivePostList,
   ArchiveShell,
@@ -9,6 +10,17 @@ import {
   SiteHeader,
 } from "@/components/site";
 import { searchPosts } from "@/services/content";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ s?: string }>;
+}): Promise<Metadata> {
+  const { s } = await searchParams;
+  return s?.trim()
+    ? { title: `검색: ${s.trim()}`, robots: { index: false, follow: true } }
+    : { alternates: { canonical: "/" } };
+}
 
 export default async function Home({
   searchParams,

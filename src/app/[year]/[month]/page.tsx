@@ -1,5 +1,18 @@
+import type { Metadata } from "next";
 import { ArchivePostList, ArchiveShell, QueryEmptyState, formatArchiveMonthTitle } from "@/components/site";
 import { getPostsByMonth } from "@/services/content";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ year: string; month: string }>;
+}): Promise<Metadata> {
+  const { year, month } = await params;
+  return {
+    title: formatArchiveMonthTitle(year, month),
+    alternates: { canonical: `/${year}/${month}/` },
+  };
+}
 
 export default async function MonthArchive({
   params,

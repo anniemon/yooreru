@@ -1,9 +1,33 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Comments } from "@/components/comments";
 import { PostNavigation, PostTagLinks, SiteHeader, formatWpDate } from "@/components/site";
-import { getAdjacentPosts, getPostByDateSlug } from "@/services/content";
+import { getAdjacentPosts, getPostByDateSlug, postHref } from "@/services/content";
 import type { BlogPost } from "@/lib/blog-types";
+
+type PostParams = Promise<{ year: string; month: string; day: string; slug: string }>;
+
+export async function generateMetadata({ params }: { params: PostParams }): Promise<Metadata> {
+  const { year, month, day, slug } = await params;
+  const post = await getPostByDateSlug(year, month, day, slug);
+  const url = postHref(post);
+  const description = post.excerpt || undefined;
+
+  return {
+    title: post.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: post.title,
+      description,
+      url,
+      publishedTime: post.publishedAt?.toISOString(),
+      images: post.featuredImageUrl ? [post.featuredImageUrl] : undefined,
+    },
+  };
+}
 
 async function AdjacentNavigation({ post }: { post: BlogPost }) {
   const adjacent = await getAdjacentPosts(post);
@@ -13,7 +37,7 @@ async function AdjacentNavigation({ post }: { post: BlogPost }) {
 export default async function PostPage({
   params,
 }: {
-  params: Promise<{ year: string; month: string; day: string; slug: string }>;
+  params: PostParams;
 }) {
   const { year, month, day, slug } = await params;
   const post = await getPostByDateSlug(year, month, day, slug);

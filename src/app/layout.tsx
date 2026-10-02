@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   },
   description: SITE.description,
   alternates: {
-    canonical: SITE.url,
     types: {
       "application/rss+xml": `${SITE.url}/feed/`,
     },

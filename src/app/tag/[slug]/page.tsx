@@ -1,5 +1,19 @@
+import type { Metadata } from "next";
 import { ArchivePostList, ArchiveShell, QueryEmptyState } from "@/components/site";
 import { getPostsByTag, getTagBySlug } from "@/services/content";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const tag = await getTagBySlug(slug);
+  return {
+    title: tag?.name ?? decodeURIComponent(slug),
+    alternates: { canonical: `/tag/${encodeURIComponent(decodeURIComponent(slug))}/` },
+  };
+}
 
 export default async function TagPage({
   params,

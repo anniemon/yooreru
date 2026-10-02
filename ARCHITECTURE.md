@@ -138,7 +138,6 @@ WordPress import에서는 이미지 URL을 수집해 다운로드하고, 최적�
 - `DATABASE_URL`: Prisma/Postgres 연결. 없으면 읽기 함수는 빈 결과를 반환하고, 쓰기 작업은 실패한다.
 - `AUTH_SECRET`: 세션 JWT 서명 키
 - `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`: seed/admin 알림
-- `NEXT_PUBLIC_SITE_URL`: canonical site URL
 - `APP_TIME_ZONE`: 기본 `Asia/Seoul`
 - `RESEND_API_KEY`, `RESEND_FROM`: 메일 발송
 - `BLOB_READ_WRITE_TOKEN`: Blob 업로드/import
