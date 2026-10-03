@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "if [ \"$VERCEL_ENV\" = production ]; then [ -n \"$DIRECT_URL\" ] || { echo 'Missing DIRECT_URL' >&2; exit 1; }; npm run db:migrate; elif [ \"$VERCEL_ENV\" != preview ]; then echo 'Missing or unsupported VERCEL_ENV' >&2; exit 1; fi && npm run build"
+}
