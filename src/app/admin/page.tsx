@@ -11,6 +11,7 @@ const viewSourceNames: Record<ViewSource, string> = {
   GOOGLE: "구글",
   INSTAGRAM: "인스타그램",
   NAVER: "네이버",
+  X: "X(트위터)",
   OTHER: "기타",
   UNKNOWN: "직접/미확인",
 };

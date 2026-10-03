@@ -1,11 +1,12 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 작업: 운영 Vercel 빌드에서 DB 마이그레이션을 먼저 실행하도록 구성하고 `main`에 푸시. 첫 Vercel 배포 성공 및 공개 홈 HTTP 200 확인.
-- 테스트 상태: 운영/Preview/누락된 환경값/마이그레이션 실패 시 빌드 명령 분기 검사, `prisma validate`, `npm run lint`, `npm run build` 통과. 임시 로컬 PostgreSQL 16에서 `DIRECT_URL` 우선 사용과 마이그레이션 전체 적용 확인. 이전 검사에서 재실행 시 대기 중인 마이그레이션 없음, 동시 조회 10건의 정확한 누적 확인. 운영 DB의 마이그레이션은 Vercel 배포 성공으로 확인했으며 조회 이벤트는 아직 확인하지 않음.
+- 최신 작업: 글 조회수 유입처에 X(구 트위터) 추가. `x.com`·`twitter.com`·`t.co`와 `utm_source=x/twitter`를 별도 집계.
+- 테스트 상태: X 유입처 분류 검사, `prisma validate`, Prisma Client 생성, `npm run lint`, `npm run build` 통과. X enum 마이그레이션의 운영 적용과 조회 이벤트는 아직 확인하지 않음.
 - 린트/빌드: 통과
 
 ## 완료된 항목
+- [x] [조회수] X(구 트위터) 유입처를 별도 집계하고 어드민에 표시.
 - [x] Vercel 운영 빌드에서 Prisma 마이그레이션을 먼저 적용하고 성공해야 Next.js를 빌드하도록 구성. Preview 빌드는 마이그레이션을 건너뛰며 중복 배포 훅 워크플로는 제거.
 - [x] [어드민] 게시글 제목 옆에 배포 이후 누적 조회수와 구글/인스타그램/네이버/기타/직접·미확인 경로별 합계 표시. 원본 URL과 방문자 정보는 저장하지 않음.
 - [x] 공개 글/아카이브별 제목과 canonical 설정, 검색 결과 noindex, `www.yooreru.com`으로 대표 주소 통일, 공개 글 사이트맵과 robots.txt 추가.
@@ -57,7 +58,7 @@
 - 운영 환경 응답 지연은 추가 계측 필요. 변경 전 공개 URL 측정 시 홈 약 0.95~3초, 카테고리 약 2~3초, 검색 약 3.6초, 개별 글 약 1.3초였음. 변경 후 배포 응답 시간은 미확인.
 
 ## 다음 단계
-- 운영 브라우저에서 조회 이벤트가 집계되는지 확인. GitHub의 기존 `NEON_DATABASE_URL`·`VERCEL_DEPLOY_HOOK_URL` 시크릿은 더 이상 사용하지 않음.
+- X enum 마이그레이션 배포 및 운영 브라우저에서 조회 이벤트가 집계되는지 확인. GitHub의 기존 `NEON_DATABASE_URL`·`VERCEL_DEPLOY_HOOK_URL` 시크릿은 더 이상 사용하지 않음.
 - Google Search Console에서 `https://www.yooreru.com/sitemap.xml` 제출 및 색인 상태 확인. apex → www 리다이렉트의 영구 전환(현재 307) 검토.
 - 새로운 구독자 등록 시 어드민 이메일로 이메일 전송하기
 - [페이지네이션] 어드민 게시글 목록: `getAdminPostList`가 최근 50개만 고정 조회하고 pagination UI/API가 없음

@@ -1,0 +1,1 @@
+ALTER TYPE "ViewSource" ADD VALUE 'X';

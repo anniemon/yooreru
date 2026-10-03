@@ -1,4 +1,4 @@
-export type ViewSource = "GOOGLE" | "INSTAGRAM" | "NAVER" | "OTHER" | "UNKNOWN";
+export type ViewSource = "GOOGLE" | "INSTAGRAM" | "NAVER" | "X" | "OTHER" | "UNKNOWN";
 
 export function classifyViewSource(referrer: string, utmSource: string | null, siteHost: string): ViewSource | null {
   const source = utmSource?.toLowerCase();
@@ -6,6 +6,7 @@ export function classifyViewSource(referrer: string, utmSource: string | null, s
     if (source === "google" || source === "googleads" || source === "google-ads") return "GOOGLE";
     if (source === "instagram" || source === "ig") return "INSTAGRAM";
     if (source === "naver") return "NAVER";
+    if (source === "x" || source === "twitter") return "X";
     return "OTHER";
   }
 
@@ -17,6 +18,7 @@ export function classifyViewSource(referrer: string, utmSource: string | null, s
     if (/(^|\.)google\.(com|co\.[a-z]{2}|[a-z]{2,3})$/.test(host)) return "GOOGLE";
     if (/(^|\.)instagram\.com$/.test(host)) return "INSTAGRAM";
     if (/(^|\.)naver\.com$/.test(host)) return "NAVER";
+    if (/(^|\.)(x\.com|twitter\.com|t\.co)$/.test(host)) return "X";
     return "OTHER";
   } catch {
     return null;
