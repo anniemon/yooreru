@@ -42,7 +42,6 @@ export default async function PostPage({
 }) {
   const { year, month, day, slug } = await params;
   const post = await getPostByDateSlug(year, month, day, slug);
-  const authorCategory = post.author.name === "노서정" ? "elephantrunk" : post.author.name === "그네" ? "fingertip" : null;
 
   return (
     <>
@@ -58,13 +57,9 @@ export default async function PostPage({
             <time dateTime={post.publishedAt?.toISOString()}>{formatWpDate(post.publishedAt)}</time>
           </div>
           <div className="has-link-color wp-block-post-author-name has-text-color has-custom-color-2-color has-cabin-font-family">
-            {authorCategory ? (
-              <Link className="wp-block-post-author-name__link underline" href={`/category/diary/${authorCategory}/`}>
-                {post.author.name}
-              </Link>
-            ) : (
-              <span className="wp-block-post-author-name__link">{post.author.name}</span>
-            )}
+            <Link className="wp-block-post-author-name__link underline" href={`/author/${post.author.id}/`}>
+              {post.author.name}
+            </Link>
           </div>
         </div>
       </div>

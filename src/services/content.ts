@@ -413,6 +413,33 @@ export async function getCategoryArchivePage(slugs: string[], page: number, page
   };
 }
 
+export const getAuthorArchivePage = cache(async (authorId: number, page: number, pageSize: number) => {
+  const db = getPrisma();
+  if (!db) return null;
+
+  const author = await db.user.findUnique({ where: { id: authorId }, select: { name: true } });
+  if (!author) return null;
+
+  const posts = await db.post.findMany({
+    where: {
+      authorId,
+      status: "PUBLISHED",
+      publishedAt: { lte: new Date() },
+    },
+    orderBy: [{ publishedAt: "desc" }],
+    skip: (page - 1) * pageSize,
+    take: pageSize + 1,
+    select: { id: true, title: true, slug: true, publishedAt: true },
+  });
+
+  return {
+    authorName: author.name,
+    posts: posts.slice(0, pageSize).map(mapPostLink),
+    page,
+    hasNext: posts.length > pageSize,
+  };
+});
+
 export async function getPostsByTag(slug: string) {
   const decoded = decodeURIComponent(slug);
   const db = getPrisma();

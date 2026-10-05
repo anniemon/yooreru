@@ -1,11 +1,13 @@
 # 프로젝트 진행 상황
 
 ## 현재 상태
-- 최신 작업: 글 조회수 유입처에 X(구 트위터) 추가. `x.com`·`twitter.com`·`t.co`와 `utm_source=x/twitter`를 별도 집계하고 `main`에 배포.
-- 테스트 상태: X 유입처 분류 검사, `prisma validate`, Prisma Client 생성, `npm run lint`, `npm run build` 통과. X enum 마이그레이션을 포함한 Vercel 배포 성공. 운영 조회 이벤트는 아직 확인하지 않음.
+- 최신 작업: 글 상세 저자 링크를 작성자 ID 기반 목록으로 변경. 새 DB 컬럼이나 마이그레이션 없이 `Post.authorId`로 조회.
+- 이전 작업: 글 조회수 유입처에 X(구 트위터) 추가. `x.com`·`twitter.com`·`t.co`와 `utm_source=x/twitter`를 별도 집계하고 `main`에 배포.
+- 테스트 상태: 작성자 ID 기반 저자 목록 변경 후 `prisma validate`, Prisma Client 생성, 타입 검사, `npm run lint`, `npm run build` 통과. 이전 X enum 마이그레이션을 포함한 Vercel 배포는 성공했으며 운영 조회 이벤트는 아직 확인하지 않음.
 - 린트/빌드: 통과
 
 ## 완료된 항목
+- [x] [공개 글] 저자 이름을 바꿔도 링크가 유지되도록 작성자 ID 기반 목록 제공.
 - [x] [조회수] X(구 트위터) 유입처를 별도 집계하고 어드민에 표시.
 - [x] Vercel 운영 빌드에서 Prisma 마이그레이션을 먼저 적용하고 성공해야 Next.js를 빌드하도록 구성. Preview 빌드는 마이그레이션을 건너뛰며 중복 배포 훅 워크플로는 제거.
 - [x] [어드민] 게시글 제목 옆에 배포 이후 누적 조회수와 구글/인스타그램/네이버/기타/직접·미확인 경로별 합계 표시. 원본 URL과 방문자 정보는 저장하지 않음.
