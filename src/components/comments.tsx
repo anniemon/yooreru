@@ -1,4 +1,5 @@
 import type { BlogComment, BlogPost } from "@/lib/blog-types";
+import { CommentForm } from "@/components/comment-form";
 import { createComment } from "@/app/actions";
 import { getAppTimeZone } from "@/lib/time-zone";
 
@@ -27,56 +28,6 @@ function avatarUrl(comment: BlogComment) {
   }
 
   return `https://www.gravatar.com/avatar/${comment.authorEmailHash}?s=80&d=mp`;
-}
-
-function CommentForm({
-  action,
-  compact = false,
-}: {
-  action: (formData: FormData) => Promise<void>;
-  compact?: boolean;
-}) {
-  return (
-    <form action={action} id={compact ? undefined : "commentform"} className="comment-form">
-      <input className="hp" type="text" name="company" tabIndex={-1} autoComplete="off" />
-      <p className="comment-form-comment">
-        <label htmlFor={compact ? "reply-content" : "comment"}>Comment</label>
-        <textarea
-          id={compact ? "reply-content" : "comment"}
-          name="content"
-          placeholder="Comment"
-          rows={compact ? 4 : 8}
-          maxLength={4000}
-          required
-        />
-      </p>
-      <p className="comment-form-author">
-        <label htmlFor={compact ? "reply-authorName" : "author"}>Name</label>
-        <input
-          id={compact ? "reply-authorName" : "author"}
-          name="authorName"
-          type="text"
-          maxLength={80}
-          placeholder="Name"
-          required
-        />
-      </p>
-      <p className="comment-form-email">
-        <label htmlFor={compact ? "reply-authorEmail" : "email"}>Email</label>
-        <input
-          id={compact ? "reply-authorEmail" : "email"}
-          name="authorEmail"
-          type="email"
-          maxLength={160}
-          placeholder="Email"
-          autoComplete="email"
-        />
-      </p>
-      <p className="form-submit">
-        <button type="submit">{compact ? "Reply" : "Comment"}</button>
-      </p>
-    </form>
-  );
 }
 
 function CommentNode({ comment, postId }: { comment: BlogComment; postId: number }) {

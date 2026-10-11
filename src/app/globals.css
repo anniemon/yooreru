@@ -1446,6 +1446,21 @@ button {
   text-transform: none;
 }
 
+.comment-form .form-submit button:not(:disabled) {
+  border-color: #454545;
+  background: #454545;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.comment-form .form-submit button:disabled {
+  cursor: not-allowed;
+}
+
+.comment-form[aria-busy="true"] .form-submit button {
+  cursor: wait;
+}
+
 .contact-shell {
   margin-top: 0;
   margin-bottom: 0;

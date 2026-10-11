@@ -189,6 +189,23 @@ export function AdminPostForm({
     }
   }
 
+  function pasteText(event: React.ClipboardEvent<HTMLDivElement>) {
+    const text = event.clipboardData.getData("text/plain");
+    if (!text) {
+      return;
+    }
+
+    const span = document.createElement("span");
+    span.style.whiteSpace = "pre-wrap";
+    span.textContent = text.replace(/\r\n?/g, "\n");
+    // Browser editing commands preserve undo history, unlike direct Range insertion.
+    if (document.execCommand("insertHTML", false, span.outerHTML)) {
+      event.preventDefault();
+      syncEditor();
+      saveSelection();
+    }
+  }
+
   function restoreSelection() {
     editorRef.current?.focus();
     const selection = window.getSelection();
@@ -715,6 +732,7 @@ export function AdminPostForm({
           contentEditable
           hidden={editorMode === "html"}
           suppressContentEditableWarning
+          onPaste={pasteText}
           onMouseUp={saveSelection}
           onKeyUp={saveSelection}
           onFocus={saveSelection}
