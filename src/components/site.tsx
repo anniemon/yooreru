@@ -338,28 +338,24 @@ export function PostNavigation({
       <div className="wp-block-column has-global-padding is-layout-constrained post-navigation-column">
         <div className="post-navigation-link-previous has-text-align-right wp-block-post-navigation-link has-small-font-size">
           {previous ? (
-            <>
+            <Link href={postHref(previous)} rel="prev">
               <span className="wp-block-post-navigation-link__arrow-previous is-arrow-chevron" aria-hidden="true">
                 «
               </span>
-              <Link href={postHref(previous)} rel="prev">
-                Previous
-              </Link>
-            </>
+              Previous
+            </Link>
           ) : null}
         </div>
       </div>
       <div className="wp-block-column is-vertically-aligned-top has-small-font-size has-global-padding is-layout-constrained post-navigation-column">
         <div className="post-navigation-link-next wp-block-post-navigation-link has-small-font-size">
           {next ? (
-            <>
-              <Link href={postHref(next)} rel="next">
-                Next
-              </Link>
+            <Link href={postHref(next)} rel="next">
+              Next
               <span className="wp-block-post-navigation-link__arrow-next is-arrow-chevron" aria-hidden="true">
                 »
               </span>
-            </>
+            </Link>
           ) : null}
         </div>
       </div>
