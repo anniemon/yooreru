@@ -19,9 +19,16 @@ const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();
   await page.route("**/*", (route) => route.abort());
-  await page.setContent('<div id="root"></div>');
-  await page.addStyleTag({ content: readFileSync("src/app/globals.css", "utf8") });
-  await page.evaluate((sources) => {
+  await page.route("https://comment-form.test/**", (route) => route.fulfill({
+    contentType: "text/html", body: '<div id="root"></div>',
+  }));
+  async function mount(path, storageBlocked = false) {
+    await page.goto(`https://comment-form.test/${path}`);
+    await page.addStyleTag({ content: readFileSync("src/app/globals.css", "utf8") });
+    if (storageBlocked) await page.evaluate(() => Object.defineProperty(window, "localStorage", {
+      get: () => { throw new DOMException("Blocked", "SecurityError"); },
+    }));
+    await page.evaluate((sources) => {
     const modules = {};
     function require(name) {
       if (!modules[name]) {
@@ -47,7 +54,10 @@ try {
         React.createElement(CommentForm, { action, compact: true }),
       ),
     );
-  }, sources);
+    }, sources);
+    await expect(page.locator("form")).toHaveCount(3);
+  }
+  await mount("first");
   const forms = page.locator("form");
   await expect(forms).toHaveCount(3);
   const ids = await page.locator("input[id], textarea[id]").evaluateAll((nodes) => nodes.map((n) => n.id));
@@ -55,6 +65,7 @@ try {
   for (const index of [0, 1]) {
     const form = forms.nth(index);
     const button = form.locator('button[type="submit"]');
+    await expect(form.getByRole("checkbox", { name: "이 브라우저에 이메일 기억하기" })).not.toBeChecked();
     await expect(button).toBeDisabled();
     await expect(form.locator('[name="authorEmail"]')).toHaveAttribute("placeholder", "Email (입력 시 댓글 알림 발송)");
     await expect(form.locator('[name="authorName"]')).toHaveAttribute("required", "");
@@ -82,7 +93,42 @@ try {
     await expect(button).toBeDisabled();
     await expect(button).toHaveText(index ? "Reply" : "Comment");
   }
-  console.log("Comment form checks passed (required/optional fields, blank/invalid input, visible enabled state, pending, rapid duplicate submit, reset, replies, unique labels).");
+  async function submitEmail(index, email) {
+    const form = page.locator("form").nth(index);
+    await form.locator('[name="authorName"]').fill("Reader");
+    await form.locator('[name="content"]').fill("Reply test");
+    await form.locator('[name="authorEmail"]').fill(email);
+    await form.getByRole("checkbox", { name: "이 브라우저에 이메일 기억하기" }).check();
+    await form.locator('button[type="submit"]').click();
+    await expect(form).toHaveAttribute("aria-busy", "true");
+    await page.evaluate(() => window.finish());
+    await expect(form).toHaveAttribute("aria-busy", "false");
+    return form;
+  }
+  const remembered = await submitEmail(0, "reader@example.com");
+  await expect(remembered.locator('[name="authorEmail"]')).toHaveValue("reader@example.com");
+  await mount("second-post");
+  for (const form of await page.locator("form").all()) {
+    await expect(form.locator('[name="authorEmail"]')).toHaveValue("reader@example.com");
+    await expect(form.getByRole("checkbox", { name: "이 브라우저에 이메일 기억하기" })).toBeChecked();
+  }
+  await submitEmail(1, "updated@example.com");
+  await mount("third-post");
+  await expect(page.locator('[name="authorEmail"]').first()).toHaveValue("updated@example.com");
+  await page.locator("form").first().getByRole("checkbox", { name: "이 브라우저에 이메일 기억하기" }).uncheck();
+  await mount("forgotten");
+  await expect(page.locator('[name="authorEmail"]').first()).toHaveValue("");
+  await page.evaluate(() => localStorage.setItem("yooreru.comment-email", "invalid-email"));
+  await mount("invalid-saved-email");
+  await expect(page.locator('[name="authorEmail"]').first()).toHaveValue("");
+  await page.evaluate(() => Object.defineProperty(Storage.prototype, "setItem", {
+    value: () => { throw new DOMException("Blocked", "SecurityError"); },
+  }));
+  await submitEmail(0, "blocked@example.com");
+  await mount("blocked-read", true);
+  await expect(page.locator('[name="authorEmail"]').first()).toHaveValue("");
+  await submitEmail(0, "blocked@example.com");
+  console.log("Comment form checks passed (validation, duplicate submit, replies, remembering across posts, updated email, reset, opt-out, malformed storage, blocked storage).");
 } finally {
   await browser.close();
 }

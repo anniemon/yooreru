@@ -1414,6 +1414,34 @@ button {
   padding: 16px;
 }
 
+.comment-form .comment-form-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #d8d8dc;
+}
+
+.comment-form-remember input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: #454545;
+}
+
+.comment-form .comment-form-remember label {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
 .comment-form input::placeholder,
 .comment-form textarea::placeholder {
   color: rgba(69, 69, 69, 0.72);
