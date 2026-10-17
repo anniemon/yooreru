@@ -145,7 +145,7 @@ export function CommentForm({
             }
           }}
         />
-        <label htmlFor={`${fieldId}-remember-details`}>이 브라우저에 이름과 이메일 기억하기</label>
+        <label htmlFor={`${fieldId}-remember-details`}>이 브라우저에서 이름과 이메일 기억하기</label>
       </p>
       <p className="form-submit">
         <button type="submit" disabled={!valid || submitting} aria-live="polite">
