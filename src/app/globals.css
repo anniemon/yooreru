@@ -848,12 +848,67 @@ button {
   width: calc(100% - 3rem);
   max-width: var(--wp--style--global--content-size);
   margin: 16px auto 32px;
-  background: var(--wp--preset--color--vivid-green-cyan);
+  border-top: 1px solid #d0cbc1;
+  border-bottom: 1px solid #d0cbc1;
+  color: var(--wp--preset--color--secondary);
+}
+
+.post-subscribe .footer-subscribe-summary {
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 16px 0;
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
+
+.post-subscribe .footer-subscribe-summary strong {
+  font-weight: 500;
+}
+
+.post-subscribe .footer-subscribe-summary::after {
+  content: "+";
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.post-subscribe .footer-subscribe-details[open] > summary::after {
+  content: "−";
+}
+
+.post-subscribe .footer-subscribe-summary:focus-visible {
+  outline: 2px solid var(--wp--preset--color--secondary);
+  outline-offset: 3px;
 }
 
 .post-subscribe .footer-subscribe-details[open] .footer-subscribe-form {
   position: static;
-  margin-bottom: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  width: 100%;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 16px;
+  border: 0;
+  background: transparent;
+}
+
+.post-subscribe .footer-subscribe-form input {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #d8d8dc;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 14px;
+}
+
+.post-subscribe .footer-subscribe-form button {
+  min-height: 44px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.post-subscribe .footer-subscribe-message {
+  grid-column: 1 / -1;
 }
 
 .footer-subscribe-form input {
