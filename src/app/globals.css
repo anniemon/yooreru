@@ -2005,7 +2005,6 @@ button {
     font-size: 1.375rem;
   }
 
-  .home-utility-row,
   .contact-columns,
   .site-footer-grid,
   .admin-heading {
@@ -2024,6 +2023,15 @@ button {
   .home-search-form,
   .home-search-form .wp-block-search__inside-wrapper {
     width: 100%;
+  }
+
+  .home-search-form {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .home-search-form .wp-block-search__input {
+    min-width: 0;
   }
 
   .wp-block-categories {
