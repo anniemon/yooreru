@@ -2121,7 +2121,6 @@ button {
   .home-utility-column,
   .home-calendar-band > .wp-block-column,
   .wp-block-query,
-  .entry-content.wp-block-post-content,
   .post-comments-shell {
     padding-right: var(--wp--preset--spacing--40);
     padding-left: var(--wp--preset--spacing--40);
