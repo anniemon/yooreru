@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Comments } from "@/components/comments";
 import { PostViewTracker } from "@/components/post-view-tracker";
-import { PostNavigation, PostTagLinks, SiteHeader, formatWpDate } from "@/components/site";
+import { PostNavigation, PostTagLinks, SiteHeader, SubscribeButton, formatWpDate } from "@/components/site";
 import { getAdjacentPosts, getPostByDateSlug, postHref } from "@/services/content";
 import type { BlogPost } from "@/lib/blog-types";
 import { getPostFontFamily } from "@/lib/post-font";
@@ -79,6 +79,9 @@ export default async function PostPage({
       <Suspense fallback={<PostNavigation previous={null} next={null} />}>
         <AdjacentNavigation post={post} />
       </Suspense>
+      <div className="post-subscribe">
+        <SubscribeButton />
+      </div>
       <Comments post={post} />
       <div className="wp-block-columns is-layout-flex">
         <div className="wp-block-column is-layout-flow">

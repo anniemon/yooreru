@@ -844,6 +844,18 @@ button {
   padding: 0 15px 15px;
 }
 
+.post-subscribe {
+  width: calc(100% - 3rem);
+  max-width: var(--wp--style--global--content-size);
+  margin: 16px auto 32px;
+  background: var(--wp--preset--color--vivid-green-cyan);
+}
+
+.post-subscribe .footer-subscribe-details[open] .footer-subscribe-form {
+  position: static;
+  margin-bottom: 16px;
+}
+
 .footer-subscribe-form input {
   border: 1px solid var(--wp--preset--color--primary);
   border-radius: 10px;
@@ -2021,6 +2033,10 @@ button {
 }
 
 @media (max-width: 782px) {
+  .post-subscribe {
+    width: calc(100% - 2rem);
+  }
+
   .post-heading-column .wp-block-post-title {
     font-size: 1.75rem;
   }

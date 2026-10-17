@@ -167,6 +167,17 @@ export async function HomeCalendar() {
   );
 }
 
+export function SubscribeButton() {
+  return (
+    <details className="footer-subscribe-details">
+      <summary className="footer-subscribe-summary">
+        <strong>구독하기</strong>
+      </summary>
+      <SubscribeForm />
+    </details>
+  );
+}
+
 export function SiteFooter() {
   return (
     <footer className="wp-block-template-part">
@@ -191,12 +202,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="wp-block-column is-style-button is-vertically-aligned-bottom has-border-color has-vivid-green-cyan-border-color has-primary-color has-vivid-green-cyan-background-color has-text-color has-background has-link-color has-1-rem-font-size is-layout-flow footer-subscribe-column">
-          <details className="footer-subscribe-details">
-            <summary className="footer-subscribe-summary">
-              <strong>구독하기</strong>
-            </summary>
-            <SubscribeForm />
-          </details>
+          <SubscribeButton />
         </div>
       </div>
     </footer>
