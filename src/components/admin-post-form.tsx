@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ALargeSmall, CodeXml, ImagePlus, Link2, Save } from "lucide-react";
 import { autosavePost, savePost, uploadEditorImage } from "@/app/admin/actions";
 import { formatDateTimeLocal } from "@/lib/time-zone";
+import { getPostFontFamily } from "@/lib/post-font";
 import type { AdminCategory } from "@/services/admin-categories";
 
 type PostFormValue = {
@@ -132,6 +133,7 @@ export function AdminPostForm({
   const [autosaveError, setAutosaveError] = useState("");
   const [editorMode, setEditorMode] = useState<"visual" | "html">("visual");
   const [htmlSource, setHtmlSource] = useState(initialContentHtml);
+  const [titleFontFamily, setTitleFontFamily] = useState(() => getPostFontFamily(initialContentHtml));
   const [linkEditorOpen, setLinkEditorOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkLabel, setLinkLabel] = useState("");
@@ -148,6 +150,7 @@ export function AdminPostForm({
 
   const syncEditor = useCallback(() => {
     const contentHtml = editorRef.current?.innerHTML.trim() || "<p><br></p>";
+    setTitleFontFamily(getPostFontFamily(contentHtml));
     if (contentInputRef.current) {
       contentInputRef.current.value = contentHtml;
     }
@@ -578,7 +581,12 @@ export function AdminPostForm({
 
       <label>
         제목
-        <input name="title" required defaultValue={post?.title ?? ""} />
+        <input
+          name="title"
+          required
+          defaultValue={post?.title ?? ""}
+          style={{ fontFamily: editorMode === "html" ? getPostFontFamily(htmlSource) : titleFontFamily }}
+        />
       </label>
       <label>
         슬러그

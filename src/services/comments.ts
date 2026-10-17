@@ -39,9 +39,10 @@ function isPostAuthorComment({
   return actorId === postAuthor.id || authorEmail?.toLocaleLowerCase() === postAuthor.email.toLocaleLowerCase();
 }
 
-async function notifyPostAuthorOfComment({
+async function notifyCommentRecipients({
   post,
   comment,
+  parent,
   actorId,
 }: {
   post: {
@@ -59,32 +60,45 @@ async function notifyPostAuthorOfComment({
     content: string;
   };
   actorId?: number | null;
+  parent: { authorEmail: string | null; content: string } | null;
 }) {
-  if (!post.author || isPostAuthorComment({ ...comment, actorId, postAuthor: post.author })) {
-    return;
-  }
-
   const { year, month, day } = formatDatePathParts(post.publishedAt ?? new Date());
   const href = `${SITE.url}/${year}/${month}/${day}/${encodeURIComponent(post.slug)}/#comments`;
   const type = comment.parentId ? "대댓글" : "댓글";
+  const recipients = new Map<string, boolean>();
+  if (post.author && !isPostAuthorComment({ ...comment, actorId, postAuthor: post.author })) {
+    recipients.set(post.author.email.toLowerCase(), false);
+  }
+  if (parent?.authorEmail && parent.authorEmail.toLowerCase() !== comment.authorEmail?.toLowerCase()) {
+    recipients.set(parent.authorEmail.toLowerCase(), true);
+  }
 
-  try {
-    await sendMail({
-      to: post.author.email,
-      subject: `${SITE.name} ${type} 알림: ${post.title}`,
-      html: [
-        `<p><strong>${escapeHtml(comment.authorName)}</strong>님이 <strong>${escapeHtml(post.title)}</strong>에 ${type}을 남겼습니다.</p>`,
-        `<blockquote>${escapeHtml(comment.content).replace(/\n/g, "<br />")}</blockquote>`,
-        `<p><a href="${href}">댓글 보러 가기</a></p>`,
-      ].join(""),
-    });
-  } catch (error) {
-    // 메일 공급자 오류가 댓글 작성 자체를 막지 않도록 한다.
-    console.error("[comment-notification] failed", {
-      commentId: comment.id,
-      postId: post.id,
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+  for (const [email, isReply] of recipients) {
+    if (isReply && post.author?.email.toLowerCase() === email &&
+      isPostAuthorComment({ ...comment, actorId, postAuthor: post.author })) continue;
+    try {
+      const result = await sendMail({
+        to: email,
+        subject: `${SITE.name} ${isReply ? "답글" : type} 알림: ${post.title}`,
+        html: [
+          `<p><strong>${escapeHtml(comment.authorName)}</strong>님이 <strong>${escapeHtml(post.title)}</strong>${isReply ? "에 남기신 댓글에 답글을" : `에 ${type}을`} 남겼습니다.</p>`,
+          ...(isReply && parent ? [
+            `<p>내 댓글</p><blockquote>${escapeHtml(parent.content).replace(/\n/g, "<br />")}</blockquote>`,
+            "<p>새 답글</p>",
+          ] : []),
+          `<blockquote>${escapeHtml(comment.content).replace(/\n/g, "<br />")}</blockquote>`,
+          `<p><a href="${href}">${isReply ? "답글" : "댓글"} 보러 가기</a></p>`,
+        ].join(""),
+      });
+      if ("error" in result && result.error) throw new Error(result.error.message);
+    } catch (error) {
+      // 메일 공급자 오류가 댓글 작성 자체를 막지 않도록 한다.
+      console.error("[comment-notification] failed", {
+        commentId: comment.id,
+        postId: post.id,
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   }
 }
 
@@ -99,6 +113,14 @@ export async function createPostComment(input: CreateCommentInput) {
     throw new Error("댓글을 남길 수 없는 게시글입니다.");
   }
 
+  const parent = input.parentId === null ? null : await db.comment.findFirst({
+    where: { id: input.parentId, postId: post.id, status: "PUBLISHED" },
+    select: { authorEmail: true, content: true },
+  });
+  if (input.parentId !== null && !parent) {
+    throw new Error("답글을 남길 댓글을 찾을 수 없습니다.");
+  }
+
   const comment = await db.comment.create({
     data: {
       postId: post.id,
@@ -110,7 +132,7 @@ export async function createPostComment(input: CreateCommentInput) {
     },
   });
 
-  await notifyPostAuthorOfComment({ post, comment, actorId: input.actorId });
+  await notifyCommentRecipients({ post, comment, parent, actorId: input.actorId });
 
   return post;
 }

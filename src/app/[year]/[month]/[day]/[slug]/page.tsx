@@ -6,6 +6,7 @@ import { PostViewTracker } from "@/components/post-view-tracker";
 import { PostNavigation, PostTagLinks, SiteHeader, formatWpDate } from "@/components/site";
 import { getAdjacentPosts, getPostByDateSlug, postHref } from "@/services/content";
 import type { BlogPost } from "@/lib/blog-types";
+import { getPostFontFamily } from "@/lib/post-font";
 
 type PostParams = Promise<{ year: string; month: string; day: string; slug: string }>;
 
@@ -50,7 +51,10 @@ export default async function PostPage({
       <div style={{ height: "100px" }} aria-hidden="true" className="wp-block-spacer"></div>
       <div className="wp-block-columns alignfull is-not-stacked-on-mobile is-layout-flex post-heading-band">
         <div className="wp-block-column has-global-padding is-layout-constrained post-heading-column">
-          <h4 className="has-link-color alignwide wp-block-post-title has-text-color has-secondary-color has-background has-custom-color-3-background-color">
+          <h4
+            className="has-link-color alignwide wp-block-post-title has-text-color has-secondary-color has-background has-custom-color-3-background-color"
+            style={{ fontFamily: getPostFontFamily(post.contentHtml) }}
+          >
             {post.title}
           </h4>
           <div className="has-link-color wp-block-post-date has-text-color has-luminous-vivid-orange-color has-background has-custom-color-3-background-color has-dm-mono-font-family">

@@ -56,7 +56,7 @@ try {
     const form = forms.nth(index);
     const button = form.locator('button[type="submit"]');
     await expect(button).toBeDisabled();
-    await expect(form.locator('[name="authorEmail"]')).toHaveAttribute("placeholder", "Email (Optional)");
+    await expect(form.locator('[name="authorEmail"]')).toHaveAttribute("placeholder", "Email (입력 시 댓글 알림 발송)");
     await expect(form.locator('[name="authorName"]')).toHaveAttribute("required", "");
     await form.locator('[name="content"]').fill("Test comment…");
     await expect(button).toBeDisabled();

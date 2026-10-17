@@ -77,7 +77,7 @@ export function CommentForm({
           name="authorEmail"
           type="email"
           maxLength={160}
-          placeholder="Email (Optional)"
+          placeholder="Email (입력 시 댓글 알림 발송)"
           autoComplete="email"
         />
       </p>
