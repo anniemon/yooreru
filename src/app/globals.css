@@ -2045,20 +2045,6 @@ button {
     flex-direction: column;
   }
 
-  .wp-calendar-nav {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .wp-calendar-nav .pad {
-    display: none;
-  }
-
-  .wp-calendar-nav-prev,
-  .wp-calendar-nav-next {
-    justify-content: center;
-  }
-
   .footer-subscribe-details[open] .footer-subscribe-form {
     position: static;
   }
