@@ -1,12 +1,36 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { subscribe, type SubscribeState } from "@/app/actions";
 
 const initialState: SubscribeState = {
   ok: false,
   message: "",
 };
+
+export function SubscribeButton() {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    function closeOnOutsideClick(event: PointerEvent) {
+      const details = detailsRef.current;
+      if (details?.open && event.target instanceof Node && !details.contains(event.target)) {
+        details.open = false;
+      }
+    }
+    document.addEventListener("pointerdown", closeOnOutsideClick, true);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick, true);
+  }, []);
+
+  return (
+    <details ref={detailsRef} className="footer-subscribe-details">
+      <summary className="footer-subscribe-summary">
+        <strong>구독하기</strong>
+      </summary>
+      <SubscribeForm />
+    </details>
+  );
+}
 
 export function SubscribeForm() {
   const [state, formAction, pending] = useActionState(subscribe, initialState);

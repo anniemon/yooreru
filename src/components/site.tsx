@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { HomeCalendarClient } from "@/components/home-calendar";
-import { SubscribeForm } from "@/components/subscribe-form";
+import { SubscribeButton } from "@/components/subscribe-form";
 import { SITE } from "@/lib/constants";
 import { getCategories, getPublishedPostLinks, postHref } from "@/services/content";
 import type { BlogCategory, BlogPost, BlogPostLink } from "@/lib/blog-types";
 import { formatWpDate as formatAppWpDate, getAppTimeZone, getZonedCalendarParts } from "@/lib/time-zone";
+
+export { SubscribeButton };
 
 type CategoryTreeNode = BlogCategory & {
   children: BlogCategory[];
@@ -164,17 +166,6 @@ export async function HomeCalendar() {
         />
       </div>
     </div>
-  );
-}
-
-export function SubscribeButton() {
-  return (
-    <details className="footer-subscribe-details">
-      <summary className="footer-subscribe-summary">
-        <strong>구독하기</strong>
-      </summary>
-      <SubscribeForm />
-    </details>
   );
 }
 
