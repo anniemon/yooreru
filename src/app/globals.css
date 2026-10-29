@@ -1825,10 +1825,10 @@ button {
 }
 
 :is(.entry-content, .admin-rich-editor) .yooreru-footnotes {
-  margin-top: 2rem;
+  margin-top: 3rem;
   border-top: 1px solid #c9c6be;
   padding-top: 1rem;
-  font-size: 0.85em;
+  font-size: 0.8em;
   line-height: 1.7;
   overflow-wrap: anywhere;
 }
