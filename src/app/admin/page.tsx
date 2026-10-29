@@ -4,6 +4,7 @@ import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
 import { isDatabaseConfigured } from "@/services/database";
 import { getAdminPostList } from "@/services/admin-posts";
+import { postHref } from "@/services/content";
 import type { ViewSource } from "@/generated/prisma/enums";
 
 const viewSourceNames: Record<ViewSource, string> = {
@@ -51,7 +52,7 @@ export default async function AdminPage() {
             {posts.map((post) => (
               <tr key={post.id}>
                 <td>
-                  <Link href={`/admin/posts/${post.id}/preview`}>{post.title}</Link>
+                  <Link href={post.status === "PUBLISHED" ? postHref(post) : `/admin/posts/${post.id}/preview`}>{post.title}</Link>
                   <span className="admin-view-count">
                     조회 {post.viewCounts.reduce((sum, item) => sum + item.count, 0).toLocaleString("ko-KR")}회
                   </span>
