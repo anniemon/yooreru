@@ -75,10 +75,8 @@ test("admin preview authenticates before reading drafts and renders saved HTML p
   await assert.rejects(open(), /notFound/);
 });
 
-test("admin list opens drafts and scheduled posts through the preview route", async () => {
-  const posts = ["DRAFT", "SCHEDULED", "PUBLISHED"].map((status, index) => ({
-    id: index + 1, title: status, status, viewCounts: [], _count: { comments: 0 },
-  }));
+test("admin list keeps the same preview URL when a draft is published with a future date", async () => {
+  const posts = [{ id: 42, title: "브레이크포인트", status: "DRAFT", publishedAt: null, viewCounts: [], _count: { comments: 0 } }];
   const page = load("app/admin/page.tsx", {
     "next/link": { default: ({ children, ...props }) => createElement("a", props, children) },
     "@/app/admin/actions": { createInvite: async () => {} },
@@ -86,10 +84,12 @@ test("admin list opens drafts and scheduled posts through the preview route", as
     "@/lib/auth": { requireAdmin: async () => {} },
     "@/services/database": { isDatabaseConfigured: () => true },
     "@/services/admin-posts": { getAdminPostList: async () => posts },
-    "@/services/content": { postHref: () => "/published-post/" },
   });
-  const html = renderToStaticMarkup(await page.default());
-  assert.match(html, /href="\/admin\/posts\/1\/preview">DRAFT/);
-  assert.match(html, /href="\/admin\/posts\/2\/preview">SCHEDULED/);
-  assert.match(html, /href="\/published-post\/">PUBLISHED/);
+  for (const status of ["DRAFT", "SCHEDULED", "PUBLISHED"]) {
+    posts[0].status = status;
+    posts[0].publishedAt = status === "DRAFT" ? null : new Date("2026-10-30T00:00:00+09:00");
+    const html = renderToStaticMarkup(await page.default());
+    assert.match(html, /href="\/admin\/posts\/42\/preview">브레이크포인트/);
+    assert.doesNotMatch(html, /href="\/2026\/10\/30\//);
+  }
 });
