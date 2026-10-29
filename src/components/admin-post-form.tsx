@@ -5,6 +5,7 @@ import { ALargeSmall, CodeXml, ImagePlus, Link2, Save } from "lucide-react";
 import { autosavePost, savePost, uploadEditorImage } from "@/app/admin/actions";
 import { formatDateTimeLocal } from "@/lib/time-zone";
 import { getPostFontFamily } from "@/lib/post-font";
+import { insertFootnote, normalizeFootnotes } from "@/lib/editor-footnotes";
 import type { AdminCategory } from "@/services/admin-categories";
 
 type PostFormValue = {
@@ -138,6 +139,9 @@ export function AdminPostForm({
   const [linkUrl, setLinkUrl] = useState("");
   const [linkLabel, setLinkLabel] = useState("");
   const [linkError, setLinkError] = useState("");
+  const [footnoteEditorOpen, setFootnoteEditorOpen] = useState(false);
+  const [footnoteText, setFootnoteText] = useState("");
+  const [footnoteError, setFootnoteError] = useState("");
   const defaultCategoryId = useMemo(
     () =>
       String(
@@ -149,6 +153,7 @@ export function AdminPostForm({
   );
 
   const syncEditor = useCallback(() => {
+    if (editorRef.current) normalizeFootnotes(editorRef.current);
     const contentHtml = editorRef.current?.innerHTML.trim() || "<p><br></p>";
     setTitleFontFamily(getPostFontFamily(contentHtml));
     if (contentInputRef.current) {
@@ -210,11 +215,14 @@ export function AdminPostForm({
   }
 
   function restoreSelection() {
+    // Focusing fires onFocus, which may replace the saved range with the old caret.
+    const range = savedRangeRef.current;
     editorRef.current?.focus();
     const selection = window.getSelection();
     selection?.removeAllRanges();
-    if (savedRangeRef.current) {
-      selection?.addRange(savedRangeRef.current);
+    if (range && editorRef.current?.contains(range.commonAncestorContainer)) {
+      selection?.addRange(range);
+      savedRangeRef.current = range;
     }
   }
 
@@ -374,10 +382,26 @@ export function AdminPostForm({
   }
 
   function openLinkEditor() {
+    setFootnoteEditorOpen(false);
     setLinkUrl("");
     setLinkLabel(selectedEditorText());
     setLinkError("");
     setLinkEditorOpen(true);
+  }
+
+  function submitFootnote() {
+    if (!footnoteText.trim() || !editorRef.current) return;
+    const range = insertFootnote(editorRef.current, savedRangeRef.current?.cloneRange() ?? null, footnoteText.trim());
+    if (!range) {
+      setFootnoteError("각주나 링크 바깥의 본문에 커서를 놓아 주세요.");
+      return;
+    }
+    savedRangeRef.current = range;
+    restoreSelection();
+    syncEditor();
+    setFootnoteEditorOpen(false);
+    setFootnoteText("");
+    setFootnoteError("");
   }
 
   function parseLinkUrl(value: string) {
@@ -657,6 +681,25 @@ export function AdminPostForm({
           </button>
           <button
             type="button"
+            title="각주 삽입"
+            aria-label="각주 삽입"
+            disabled={editorMode === "html"}
+            aria-expanded={footnoteEditorOpen}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              saveSelection();
+            }}
+            onClick={() => {
+              setLinkEditorOpen(false);
+              setFootnoteText("");
+              setFootnoteError("");
+              setFootnoteEditorOpen(true);
+            }}
+          >
+            각주
+          </button>
+          <button
+            type="button"
             title={editorMode === "visual" ? "HTML 직접 편집" : "비주얼 편집으로 돌아가기"}
             aria-pressed={editorMode === "html"}
             onClick={switchEditorMode}
@@ -674,6 +717,25 @@ export function AdminPostForm({
             onChange={handleImageChange}
           />
         </div>
+        {footnoteEditorOpen && editorMode === "visual" ? (
+          <div className="admin-link-editor admin-footnote-editor" aria-label="각주 삽입">
+            <label>
+              각주 내용
+              <textarea
+                autoFocus
+                rows={3}
+                value={footnoteText}
+                onChange={(event) => setFootnoteText(event.currentTarget.value)}
+              />
+            </label>
+            <p>커서 위치에 번호를 넣습니다. 내용은 본문 아래에서 수정하고, 본문의 번호를 지우면 각주도 삭제됩니다.</p>
+            <div className="admin-link-editor-actions">
+              <button type="button" disabled={!footnoteText.trim()} onClick={submitFootnote}>삽입</button>
+              <button type="button" className="admin-link-editor-cancel" onClick={() => setFootnoteEditorOpen(false)}>취소</button>
+            </div>
+            {footnoteError ? <p className="admin-editor-error">{footnoteError}</p> : null}
+          </div>
+        ) : null}
         {linkEditorOpen ? (
           <div className="admin-link-editor" aria-label="링크 삽입">
             <label>

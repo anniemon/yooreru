@@ -1802,6 +1802,60 @@ button {
   font-weight: 600;
 }
 
+.admin-footnote-editor {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-footnote-editor p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.admin-footnote-editor textarea {
+  min-width: 0;
+  min-height: 80px;
+  resize: vertical;
+}
+
+:is(.entry-content, .admin-rich-editor) sup[data-footnote-id] {
+  margin-inline: 0.1em;
+  font-size: 0.7em;
+  line-height: 0;
+  vertical-align: super;
+}
+
+:is(.entry-content, .admin-rich-editor) .yooreru-footnotes {
+  margin-top: 2rem;
+  border-top: 1px solid #c9c6be;
+  padding-top: 1rem;
+  font-size: 0.85em;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+:is(.entry-content, .admin-rich-editor) .yooreru-footnotes ol {
+  padding-left: 1.6em;
+}
+
+:is(.entry-content, .admin-rich-editor) .yooreru-footnotes li {
+  margin-bottom: 0.5em;
+  scroll-margin-top: 2rem;
+}
+
+.yooreru-footnote-text {
+  white-space: pre-wrap;
+}
+
+:is(.entry-content, .admin-rich-editor) :is(sup[data-footnote-id] a, .yooreru-footnote-backlink) {
+  color: #2271b1;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+:is(.entry-content, .admin-rich-editor) .yooreru-footnotes li:target {
+  background: #fff4ce;
+}
+
 .editor-form .admin-link-editor input {
   min-width: 0;
 }
