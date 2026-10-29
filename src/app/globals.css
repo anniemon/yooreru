@@ -1834,7 +1834,8 @@ button {
 }
 
 :is(.entry-content, .admin-rich-editor) .yooreru-footnotes ol {
-  padding-left: 1.6em;
+  padding-left: 0;
+  list-style: decimal inside;
 }
 
 :is(.entry-content, .admin-rich-editor) .yooreru-footnotes li {
