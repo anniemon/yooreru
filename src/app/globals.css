@@ -1822,6 +1822,7 @@ button {
   font-size: 0.7em;
   line-height: 0;
   vertical-align: super;
+  scroll-margin-top: 30vh;
 }
 
 :is(.entry-content, .admin-rich-editor) .yooreru-footnotes {
@@ -1853,6 +1854,7 @@ button {
   text-underline-offset: 0.15em;
 }
 
+:is(.entry-content, .admin-rich-editor) sup[data-footnote-id]:target,
 :is(.entry-content, .admin-rich-editor) .yooreru-footnotes li:target {
   background: #fff4ce;
 }
