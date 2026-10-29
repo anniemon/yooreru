@@ -1,12 +1,11 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Comments } from "@/components/comments";
 import { PostViewTracker } from "@/components/post-view-tracker";
-import { PostNavigation, PostTagLinks, SiteHeader, SubscribeButton, formatWpDate } from "@/components/site";
+import { PostNavigation, PostTagLinks, SiteHeader, SubscribeButton } from "@/components/site";
 import { getAdjacentPosts, getPostByDateSlug, postHref } from "@/services/content";
 import type { BlogPost } from "@/lib/blog-types";
-import { getPostFontFamily } from "@/lib/post-font";
+import { PostArticle } from "@/components/post-article";
 
 type PostParams = Promise<{ year: string; month: string; day: string; slug: string }>;
 
@@ -48,32 +47,7 @@ export default async function PostPage({
     <>
       <PostViewTracker postId={post.id} />
       <SiteHeader />
-      <div style={{ height: "100px" }} aria-hidden="true" className="wp-block-spacer"></div>
-      <div className="wp-block-columns alignfull is-not-stacked-on-mobile is-layout-flex post-heading-band">
-        <div className="wp-block-column has-global-padding is-layout-constrained post-heading-column">
-          <h4
-            className="has-link-color alignwide wp-block-post-title has-text-color has-secondary-color has-background has-custom-color-3-background-color"
-            style={{ fontFamily: getPostFontFamily(post.contentHtml) }}
-          >
-            {post.title}
-          </h4>
-          <div className="has-link-color wp-block-post-date has-text-color has-luminous-vivid-orange-color has-background has-custom-color-3-background-color has-dm-mono-font-family">
-            <time dateTime={post.publishedAt?.toISOString()}>{formatWpDate(post.publishedAt)}</time>
-          </div>
-          <div className="has-link-color wp-block-post-author-name has-text-color has-custom-color-2-color has-cabin-font-family">
-            <Link className="wp-block-post-author-name__link underline" href={`/author/${post.author.id}/`}>
-              {post.author.name}
-            </Link>
-          </div>
-        </div>
-      </div>
-      <div style={{ height: "30px" }} aria-hidden="true" className="wp-block-spacer"></div>
-      <div className="wp-block-template-part">
-        <div
-          className="entry-content wp-block-post-content has-global-padding is-layout-constrained"
-          dangerouslySetInnerHTML={{ __html: post.contentHtml }}
-        />
-      </div>
+      <PostArticle post={post} />
       <PostTagLinks post={post} />
       <div style={{ height: "150px" }} aria-hidden="true" className="wp-block-spacer"></div>
       <Suspense fallback={<PostNavigation previous={null} next={null} />}>

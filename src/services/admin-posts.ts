@@ -57,6 +57,22 @@ export async function getAdminPostForEdit(id: number) {
   });
 }
 
+export async function getAdminPostForPreview(id: number) {
+  const db = getPrisma();
+  if (!db) return null;
+
+  return db.post.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      contentHtml: true,
+      publishedAt: true,
+      author: { select: { id: true, name: true } },
+    },
+  });
+}
+
 function splitTerms(input?: string) {
   return (input ?? "")
     .split(",")

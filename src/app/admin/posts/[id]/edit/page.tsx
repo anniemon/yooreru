@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { AdminPostForm } from "@/components/admin-post-form";
 import { AdminShell } from "@/components/admin-shell";
 import { requireAdmin } from "@/lib/auth";
@@ -34,6 +35,7 @@ export default async function EditPostPage({
           <h1>글 수정</h1>
           <p>{post.title}</p>
         </div>
+        <Link className="admin-button" href={`/admin/posts/${post.id}/preview`}>저장된 글 미리보기</Link>
       </div>
       <AdminPostForm
         post={{ ...formPost, tags: postTags.map((postTag) => postTag.tag) }}

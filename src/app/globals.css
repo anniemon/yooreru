@@ -1911,6 +1911,22 @@ button {
   outline: none;
 }
 
+.admin-preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 24px;
+  border-bottom: 1px solid #c9c6be;
+  padding: 12px 24px;
+  background: #f6f7f4;
+  font-size: 14px;
+}
+
+.admin-preview-bar a {
+  text-decoration: underline;
+}
+
 .admin-html-editor {
   display: block;
   width: 100%;
