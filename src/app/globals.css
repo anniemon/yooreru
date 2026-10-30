@@ -1841,7 +1841,7 @@ button {
 
 :is(.entry-content, .admin-rich-editor) .yooreru-footnotes li {
   margin-bottom: 0.5em;
-  scroll-margin-top: 2rem;
+  scroll-margin-top: 6rem;
 }
 
 .yooreru-footnote-text {
@@ -1852,6 +1852,23 @@ button {
   color: #2271b1;
   text-decoration: underline;
   text-underline-offset: 0.15em;
+}
+
+:is(.entry-content, .admin-rich-editor) .yooreru-footnote-backlink {
+  display: inline-block;
+  vertical-align: -0.15rem;
+  font-size: 0;
+  text-decoration: none;
+}
+
+:is(.entry-content, .admin-rich-editor) .yooreru-footnote-backlink::before {
+  content: "";
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 4-5 5 5 5M4 9h11a5 5 0 0 1 0 10h-3'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 4-5 5 5 5M4 9h11a5 5 0 0 1 0 10h-3'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 :is(.entry-content, .admin-rich-editor) sup[data-footnote-id]:target,
